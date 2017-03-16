@@ -26,11 +26,11 @@ public class CCANode {
     
     public String nodeID;
              
-    public int refCountLeft   ;
-    public int refCountRight ;
+    public int refCountLeft  =ZERO ;
+    public int refCountRight  =ZERO;
     
     //these two are used by CB 
-    public int leftSideSkipCount=ZERO, rightSideSkipCount= ZERO;
+    public int skipCountLeft=ZERO, skipCountRight= ZERO;
      
     //if this CCA node is used , how many node LPs need to be solved ?
     public int numNodeLPSolvesNeeded;
@@ -79,7 +79,7 @@ public class CCANode {
     public String toString () {
         String result =          "Printing CCA Node "+ this.nodeID + "\n";
         result +=          "Refcounts  "+ this.refCountLeft + " , " + this.refCountRight+ "\n" ;
-        result +=          "Skip counts  "+ this.leftSideSkipCount + " , " + this.rightSideSkipCount+ "\n" ;
+        result +=          "Skip counts  "+ this.skipCountLeft + " , " + this.skipCountRight+ "\n" ;
         result += "LP solves needed "+ this.numNodeLPSolvesNeeded+ "\n";
         result += " Here is the single branch map"+ "\n";
         for (Map.Entry entry : this.mapOfNodesWithOneMissingBranch.entrySet()) {

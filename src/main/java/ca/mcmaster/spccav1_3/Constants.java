@@ -5,6 +5,9 @@
  */
 package ca.mcmaster.spccav1_3;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  *
  * @author tamvadss
@@ -30,7 +33,11 @@ public class Constants {
     public static final boolean IS_MAXIMIZATION = false;
      
     //CCA represents this many nodes
-    public static final  int NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE  =  3; 
+    public static final  int NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE  =  6;     
+    //remove after testing
+    //List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node25", "Node23", "Node24","Node13", "Node29", "Node30");      
+    public static final List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node15", "Node21", "Node22", "Node25","Node28", "Node29", "Node30");      
+    
     
     //for testing, grow the tree this big
     public static  final int TOTAL_LEAFS_IN_SOLUTION_TREE =  18 ;

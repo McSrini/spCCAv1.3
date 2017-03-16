@@ -6,8 +6,10 @@
 package ca.mcmaster.spccav1_3.cplex;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
+import ca.mcmaster.spccav1_3.cb.CBTreeGenerator;
 import ca.mcmaster.spccav1_3.cca.CCAFinder;
 import ca.mcmaster.spccav1_3.cca.CCANode;
+import ca.mcmaster.spccav1_3.cb.CBInstructionTree;
 import ca.mcmaster.spccav1_3.cplex.callbacks.*;
 import ca.mcmaster.spccav1_3.cplex.datatypes.NodeAttachment;
 import ilog.concert.IloException;
@@ -41,6 +43,8 @@ public class ActiveSubtree {
     
     //use this object to run CCA algorithms
     private CCAFinder ccaFinder =new CCAFinder();
+    
+    private CBTreeGenerator cbTreeGenerator ;
     
     static {
         logger.setLevel(Level.DEBUG);
@@ -96,6 +100,21 @@ public class ActiveSubtree {
         
     }
     
+    //if wanted leafs are not specified, every migratable leaf under this CCA is assumed to be wanted
+    public CBInstructionTree getCBTree (CCANode ccaNode ) {
+        List<String> wantedLeafs = new ArrayList<String> ();
+        for (NodeAttachment node :  this.allActiveLeafs){
+            if (ccaNode.pruneList.contains(node.nodeID) && node.isMigrateable) wantedLeafs.add(node.nodeID);
+        }
+        cbTreeGenerator = new CBTreeGenerator( ccaNode,     allActiveLeafs,   wantedLeafs) ;
+        return null;
+    }
+        
+    public CBInstructionTree getCBTree (CCANode ccaNode, List<String> wantedLeafs) {
+        
+        cbTreeGenerator = new CBTreeGenerator( ccaNode,     allActiveLeafs,   wantedLeafs) ;
+        return null;
+    }
  
     public List<CCANode> getCandidateCCANodes (List<String> wantedLeafNodeIDs)   {         
         return ccaFinder.  getCandidateCCANodes ( wantedLeafNodeIDs);       

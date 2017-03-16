@@ -9,7 +9,7 @@ import static ca.mcmaster.spccav1_3.Constants.*;
 import ca.mcmaster.spccav1_3.cca.CCANode;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtree;
 import static java.lang.System.exit;
-import java.util.List;
+import java.util.*;
 import org.apache.log4j.*;
  
 
@@ -42,8 +42,10 @@ public class TestDriver {
         
         List<CCANode> candidateCCANodes =activeSubtree.getCandidateCCANodes( NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE);
         for (CCANode ccaNode :candidateCCANodes ){
-            logger.debug (ccaNode) ;
+            logger.debug (ccaNode) ;              
         }
+         
+        activeSubtree.getCBTree(candidateCCANodes.get(ZERO));
         
     } //end main
     

@@ -33,10 +33,6 @@ public class BranchHandler extends IloCplex.BranchCallback {
     
     public double bestReamining_LPValue = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
     
-    //remove after testing
-    //List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node25", "Node23", "Node24","Node13", "Node29", "Node30");      
-    List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node15", "Node22", "Node25","Node28", "Node29", "Node30");      
-    
     static {
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     

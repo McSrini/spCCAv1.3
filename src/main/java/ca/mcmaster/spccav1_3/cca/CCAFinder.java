@@ -109,9 +109,10 @@ public class CCAFinder {
         
     }
     
+    //these getCandidateCCANodes() methods can be invoked multiple times, each time with a differnt argument
     public List<CCANode> getCandidateCCANodes (List<String> wantedLeafNodeIDs) {
         buildRefCounts(  wantedLeafNodeIDs);
-        printState(root);
+        //printState(root);
         
         //prepare to split tree and find CCA nodes
         candidateCCANodes.clear();
@@ -119,9 +120,10 @@ public class CCAFinder {
         this.splitToCCA(root, wantedLeafNodeIDs.size() );
         return this.candidateCCANodes;
     }
+    
     public List<CCANode> getCandidateCCANodes (int count)   {
         buildRefCounts();
-        printState(root);
+        //printState(root);
                 
         //prepare to split tree and find CCA nodes
         candidateCCANodes.clear();
@@ -129,7 +131,8 @@ public class CCAFinder {
         this.splitToCCA(root, count);
         return this.candidateCCANodes;
     }
-            
+     
+  
      
     private void buildRefCounts( ){
        buildRefCounts(null);
@@ -137,7 +140,7 @@ public class CCAFinder {
     
     //pass in null to build counts using isMigratable flag inside the leaf
     private void buildRefCounts(List<String> wantedLeafNodeIDs){
-        clearRefCounts();
+        clearRefCountsAndSkipCounts();
         for (NodeAttachment leaf : this.allLeafs){
             if (wantedLeafNodeIDs!=null && !wantedLeafNodeIDs.contains(leaf.nodeID)) continue;
             
@@ -238,8 +241,11 @@ public class CCAFinder {
         thisNode.ccaInformation.depthOfCCANodeBelowRoot = thisNode.depthFromSubtreeRoot;
         
         thisNode.ccaInformation.maxDepthOFTree= getMaxDepthOfTree () ;
+        
+        thisNode.ccaInformation.branchingInstructionList.clear();//reset
         getBranchingInstructionForCCANode (  thisNode,    thisNode.ccaInformation.branchingInstructionList);
         
+        thisNode.ccaInformation.pruneList.clear();//reset
         getPruneList(thisNode, thisNode.ccaInformation.pruneList);
         
     }
@@ -326,7 +332,7 @@ public class CCAFinder {
                
     }
     
-    private void clearRefCounts() {
+    private void clearRefCountsAndSkipCounts() {
         for (NodeAttachment leaf : this.allLeafs){
             
             //climb up from this leaf  
@@ -336,7 +342,9 @@ public class CCAFinder {
                 
                 parent.ccaInformation.refCountLeft=ZERO;
                 parent.ccaInformation.refCountRight=ZERO; 
-                
+                parent.ccaInformation.skipCountLeft=ZERO;
+                parent.ccaInformation.skipCountRight=ZERO;
+                 
                 thisNode= parent;
                 parent = parent.parentData;
                 
@@ -344,16 +352,5 @@ public class CCAFinder {
         }
     }
     
-    //dump status 
-    private void printState(NodeAttachment node) {
-        if ( node.ccaInformation!=null){
-            logger.debug( node.ccaInformation);
-        }
-        if (node.leftChildRef!=null && !node.leftChildRef.isLeaf()){
-            printState( node.leftChildRef);
-        }
-        if (node.rightChildRef!=null && !node.rightChildRef.isLeaf()){
-            printState( node.rightChildRef);
-        }
-    }
+
 }
