@@ -6,6 +6,7 @@
 package ca.mcmaster.spccav1_3.cca;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
+import static ca.mcmaster.spccav1_3.cca.CCAUtils.*;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtree;
 import ca.mcmaster.spccav1_3.cplex.datatypes.BranchingInstruction;
 import ca.mcmaster.spccav1_3.cplex.datatypes.NodeAttachment;
@@ -64,7 +65,7 @@ public class CCAFinder {
                     parent.ccaInformation.nodeID = parent.nodeID;
                 }
                 
-                //set the ref-counts and child refs for parent
+                //set the child refs for parent
                 if (parent.leftChildNodeID!=null && parent.leftChildNodeID.equals( thisNode.nodeID)) {                    
                     parent.leftChildRef=thisNode;                   
                 }else {   
@@ -188,7 +189,7 @@ public class CCAFinder {
             if (thisNode.ccaInformation.refCountLeft+ thisNode.ccaInformation.refCountRight>= count*(ONE-CCA_TOLERANCE_FRACTION)) {
                 //found a valid candidate
                 //add branching instructions, # of redundant LP solves needed and so on
-                populateCCAStatistics(thisNode) ;
+                CCAUtils.populateCCAStatistics(thisNode, this.allLeafs) ;
                 candidateCCANodes.add(thisNode.ccaInformation);                
             }
         }
@@ -213,123 +214,6 @@ public class CCAFinder {
         
         return result;
         
-    }
-    
-    private void  populateCCAStatistics(NodeAttachment thisNode) {
-        
-        /*populate  :
-        
-        
-        
-        numNodeLPSolvesNeeded
-        mapOfNodesWithOneMissingBranch 
-        
-        depthOfCCANodeBelowRoot;
-        
-        maxDepthOFTree;
-        branchingInstructionList
-        
-        pruneList
-        
-        */
-        
-        
-        
-        thisNode.ccaInformation.numNodeLPSolvesNeeded=getNodeLPSolvesNeeded(  thisNode);
-        getMapOFNodeWithOneMissingBranch(thisNode,  thisNode.ccaInformation.mapOfNodesWithOneMissingBranch);
-        
-        thisNode.ccaInformation.depthOfCCANodeBelowRoot = thisNode.depthFromSubtreeRoot;
-        
-        thisNode.ccaInformation.maxDepthOFTree= getMaxDepthOfTree () ;
-        
-        thisNode.ccaInformation.branchingInstructionList.clear();//reset
-        getBranchingInstructionForCCANode (  thisNode,    thisNode.ccaInformation.branchingInstructionList);
-        
-        thisNode.ccaInformation.pruneList.clear();//reset
-        getPruneList(thisNode, thisNode.ccaInformation.pruneList);
-        
-    }
-    
-    private void getMapOFNodeWithOneMissingBranch(NodeAttachment node, Map<Integer, Integer > mapOfNodesWithOneMissingBranch){
-        if (node.leftChildRef==null && node.rightChildRef==null){
-            //do nothing
-        } else if (node.leftChildRef!=null && node.rightChildRef!=null) {
-            getMapOFNodeWithOneMissingBranch(node.leftChildRef, mapOfNodesWithOneMissingBranch);
-            getMapOFNodeWithOneMissingBranch(node.rightChildRef, mapOfNodesWithOneMissingBranch);
-        }else  {
-            //only one side is null
-            int depth = node.depthFromSubtreeRoot;
-            int value = mapOfNodesWithOneMissingBranch.containsKey(depth)? mapOfNodesWithOneMissingBranch.get(depth): ZERO;
-            mapOfNodesWithOneMissingBranch.put (depth, value);
-            
-            if (node.leftChildRef!=null) getMapOFNodeWithOneMissingBranch(node.leftChildRef, mapOfNodesWithOneMissingBranch);
-            else                         getMapOFNodeWithOneMissingBranch(node.rightChildRef, mapOfNodesWithOneMissingBranch);
-             
-        }
-    }
-    
-    private int getNodeLPSolvesNeeded (NodeAttachment node) {
-        int count = ONE;
-        
-        if (node.leftChildRef==null && node.rightChildRef==null) {
-            count = ZERO;
-        } else if (node.leftChildRef==null) {
-            if (!node.rightChildRef.isLeaf()) count +=getNodeLPSolvesNeeded(node.rightChildRef);
-        } else if (node.rightChildRef==null ){
-            if (!node.leftChildRef.isLeaf()) count +=getNodeLPSolvesNeeded(node.leftChildRef);
-        }else {
-            //neither side is null
-            if (!node.rightChildRef.isLeaf()) count +=getNodeLPSolvesNeeded(node.rightChildRef);
-            if (!node.leftChildRef.isLeaf()) count +=getNodeLPSolvesNeeded(node.leftChildRef);
-        }
-        
-        return count;
-    }
-   
-    private int  getMaxDepthOfTree () {
-        int max = -ONE;
-        for (NodeAttachment leaf : allLeafs){
-            if ( leaf.depthFromSubtreeRoot > max ) max = leaf.depthFromSubtreeRoot;
-        }
-        return max;
-    }
-    
-    //climb up all the way to root
-    private void getBranchingInstructionForCCANode (NodeAttachment node,  List<BranchingInstruction> branchingInstructions){
-        
-        NodeAttachment thisNode = node;
-        NodeAttachment parent = node.parentData;
-        while (parent !=null){
-            
-            if (parent.rightChildRef!=null && parent.rightChildNodeID.equals( thisNode.nodeID)) {
-                branchingInstructions.add(parent.branchingInstructionForRightChild) ;
-            } else {
-                //must be the left child
-                 branchingInstructions.add(parent.branchingInstructionForLeftChild) ;
-            }
-            
-            thisNode = parent;
-            parent = parent.parentData;
-        }
-    }
-    
-    //find all leafs below this CCA node
-    private void getPruneList(NodeAttachment thisNode, List<String> pruneList) {
-        if (thisNode.leftChildRef!=null ){
-            if (thisNode.leftChildRef.isLeaf()) {
-                pruneList.add(thisNode.leftChildRef.nodeID) ;
-            } else {
-                getPruneList(  thisNode.leftChildRef,  pruneList)        ;
-            }
-        }
-        if (thisNode.rightChildRef !=null) {
-            if (thisNode.rightChildRef.isLeaf()) {
-                pruneList.add(thisNode.rightChildRef.nodeID) ;
-            } else {
-                getPruneList(  thisNode.rightChildRef,  pruneList)        ;
-            }
-        }            
-               
     }
     
     private void clearRefCountsAndSkipCounts() {

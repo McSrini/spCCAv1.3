@@ -6,7 +6,7 @@
 package ca.mcmaster.spccav1_3.cplex;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
-import ca.mcmaster.spccav1_3.cb.CBTreeGenerator;
+import ca.mcmaster.spccav1_3.cb.CBInstructionGenerator;
 import ca.mcmaster.spccav1_3.cca.CCAFinder;
 import ca.mcmaster.spccav1_3.cca.CCANode;
 import ca.mcmaster.spccav1_3.cb.CBInstructionTree;
@@ -44,7 +44,7 @@ public class ActiveSubtree {
     //use this object to run CCA algorithms
     private CCAFinder ccaFinder =new CCAFinder();
     
-    private CBTreeGenerator cbTreeGenerator ;
+    private CBInstructionGenerator cbInstructionGenerator ;
     
     static {
         logger.setLevel(Level.DEBUG);
@@ -100,20 +100,35 @@ public class ActiveSubtree {
         
     }
     
+    public void prune(List<String> pruneList) {
+        //close CCA finder
+        this.ccaFinder.close();
+        
+        //update allActiveLeafs
+        List<NodeAttachment> newActiveLeafs = new ArrayList<NodeAttachment> ();
+        for (NodeAttachment currentLeaf : this.allActiveLeafs){
+            if (!pruneList.contains(currentLeaf.nodeID) ) newActiveLeafs.add(currentLeaf);
+        }
+        allActiveLeafs=newActiveLeafs;
+                
+        //re-init the CCA finder
+        ccaFinder .initialize(allActiveLeafs);
+    }
+    
     //if wanted leafs are not specified, every migratable leaf under this CCA is assumed to be wanted
     public CBInstructionTree getCBTree (CCANode ccaNode ) {
         List<String> wantedLeafs = new ArrayList<String> ();
         for (NodeAttachment node :  this.allActiveLeafs){
             if (ccaNode.pruneList.contains(node.nodeID) && node.isMigrateable) wantedLeafs.add(node.nodeID);
         }
-        cbTreeGenerator = new CBTreeGenerator( ccaNode,     allActiveLeafs,   wantedLeafs) ;
-        return null;
+        cbInstructionGenerator = new CBInstructionGenerator( ccaNode,     allActiveLeafs,   wantedLeafs) ;
+        return cbInstructionGenerator.generateInstructions( );
     }
         
     public CBInstructionTree getCBTree (CCANode ccaNode, List<String> wantedLeafs) {
         
-        cbTreeGenerator = new CBTreeGenerator( ccaNode,     allActiveLeafs,   wantedLeafs) ;
-        return null;
+        cbInstructionGenerator = new CBInstructionGenerator( ccaNode,     allActiveLeafs,   wantedLeafs) ;
+        return cbInstructionGenerator.generateInstructions( );
     }
  
     public List<CCANode> getCandidateCCANodes (List<String> wantedLeafNodeIDs)   {         

@@ -6,6 +6,7 @@
 package ca.mcmaster.spccav1_3;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
+import ca.mcmaster.spccav1_3.cb.CBInstructionTree;
 import ca.mcmaster.spccav1_3.cca.CCANode;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtree;
 import static java.lang.System.exit;
@@ -45,7 +46,21 @@ public class TestDriver {
             logger.debug (ccaNode) ;              
         }
          
-        activeSubtree.getCBTree(candidateCCANodes.get(ZERO));
+        CBInstructionTree tree = activeSubtree.getCBTree(candidateCCANodes.get(ZERO));
+        
+        tree.print();
+        
+        logger.debug ("Pruning leafs under CB tree") ;         
+        activeSubtree.prune( tree.pruneList);
+        
+        candidateCCANodes = activeSubtree.getCandidateCCANodes( Arrays.asList(  "Node21", "Node22", "Node25","Node28", "Node29", "Node30"));
+         for (CCANode ccaNode :candidateCCANodes ){
+            logger.debug (ccaNode) ;              
+        }
+         
+        tree = activeSubtree.getCBTree(candidateCCANodes.get(ZERO),Arrays.asList(  "Node21", "Node22", "Node25","Node28", "Node29", "Node30") );
+        
+        tree.print();
         
     } //end main
     

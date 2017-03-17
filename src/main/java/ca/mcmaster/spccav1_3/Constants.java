@@ -44,7 +44,7 @@ public class Constants {
     
     //CCA subtree allowed to have slightly less good leafs than asked for in NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE 
     public static final double CCA_TOLERANCE_FRACTION =  0.15;
-    public static final double CCA_PACKING_FACTOR_MAXIMUM =  2.0;
+    public static final double CCA_PACKING_FACTOR_MAXIMUM =  0.0;
     
     //for testing
     public static final boolean BackTrack = true;

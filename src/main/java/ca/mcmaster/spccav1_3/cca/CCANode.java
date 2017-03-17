@@ -33,7 +33,7 @@ public class CCANode {
     public int skipCountLeft=ZERO, skipCountRight= ZERO;
      
     //if this CCA node is used , how many node LPs need to be solved ?
-    public int numNodeLPSolvesNeeded;
+    public int numNodeLPSolvesNeeded=ZERO;
     //record # of nodes with one missing branch, and their depth away from root
     public Map<Integer, Integer > mapOfNodesWithOneMissingBranch= new LinkedHashMap <Integer, Integer > ();
     
@@ -45,8 +45,10 @@ public class CCANode {
     public List<BranchingInstruction> branchingInstructionList= new ArrayList<BranchingInstruction>();
     
     //if this CCA node has kids, how to create them. This is used only during controlled branching.
-    public List<BranchingInstruction> leftChildInstructions=new ArrayList<BranchingInstruction>();
-    public List<BranchingInstruction> rightChildInstructions=new ArrayList<BranchingInstruction>();
+    public List<BranchingInstruction> leftChildBranchingInstructions =new ArrayList<BranchingInstruction>();
+    public String leftChildNodeID = null;
+    public List<BranchingInstruction> rightChildBranchingInstructions=new ArrayList<BranchingInstruction>();
+    public String rightChildNodeID = null;
  
     //nodes that need to be pruned from original MIP, in case this CCA node is chosen for migration
     public List<String> pruneList=new ArrayList<String>();
@@ -63,6 +65,10 @@ public class CCANode {
             exit(1);
         }
           
+    }
+    
+    public boolean areCCAStatisticsPopulated (){
+        return numNodeLPSolvesNeeded>ZERO;
     }
     
     public int getNumGoodLeafsRepresented() {
@@ -82,7 +88,7 @@ public class CCANode {
         result +=          "Skip counts  "+ this.skipCountLeft + " , " + this.skipCountRight+ "\n" ;
         result += "LP solves needed "+ this.numNodeLPSolvesNeeded+ "\n";
         result += " Here is the single branch map"+ "\n";
-        for (Map.Entry entry : this.mapOfNodesWithOneMissingBranch.entrySet()) {
+        for (Map.Entry<Integer, Integer> entry : this.mapOfNodesWithOneMissingBranch.entrySet()) {
              result +=(entry.getKey() + ", " + entry.getValue() + "\n");
         }
         result += " Depth below root " + this.depthOfCCANodeBelowRoot + " and max depth" + this.maxDepthOFTree+ "\n";
@@ -92,6 +98,16 @@ public class CCANode {
         }
         result += " \n Here are the branching instructions"+ "\n";
         for (BranchingInstruction bi: branchingInstructionList){
+            result += bi +",";
+        }
+        
+        result += " \n Here are the LEFT SIDE branching instructions for left child "+ this.leftChildNodeID+"\n";
+        for (BranchingInstruction bi: this.leftChildBranchingInstructions){
+            result += bi +",";
+        }
+       
+        result += " \n Here are the RIGHT SIDE branching instructions for right child "+ this.rightChildNodeID+"\n";
+        for (BranchingInstruction bi: this.rightChildBranchingInstructions){
             result += bi +",";
         }
 
