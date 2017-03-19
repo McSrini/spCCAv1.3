@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package ca.mcmaster.spccav1_3.cplex.utilities;
+package ca.mcmaster.spccav1_3.utilities;
   
 import static ca.mcmaster.spccav1_3.Constants.*;
 import ilog.concert.IloException;
@@ -21,16 +21,16 @@ import org.apache.log4j.RollingFileAppender;
  *
  * @author tamvadss
  */
-public class UtilityLibrary {
+public class CplexUtilities {
     
     
-    private static Logger logger=Logger.getLogger(UtilityLibrary.class);
+    private static Logger logger=Logger.getLogger(CplexUtilities.class);
     
     static {
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+UtilityLibrary.class.getSimpleName()+ LOG_FILE_EXTENSION));
+            logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+CplexUtilities.class.getSimpleName()+ LOG_FILE_EXTENSION));
             logger.setAdditivity(false);
         } catch (Exception ex) {
             System.err.println("Exit: unable to initialize logging");        

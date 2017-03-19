@@ -5,6 +5,7 @@
  */
 package ca.mcmaster.spccav1_3.cplex.callbacks;
 
+import ca.mcmaster.spccav1_3.utilities.BranchHandlerUtilities;
 import static ca.mcmaster.spccav1_3.Constants.*;
 import ca.mcmaster.spccav1_3.cplex.datatypes.BranchingInstruction;
 import ca.mcmaster.spccav1_3.cplex.datatypes.NodeAttachment;
@@ -76,7 +77,7 @@ public class BranchHandler extends IloCplex.BranchCallback {
                     //apply the bound changes specific to this child
                     
                     //first create the child node attachment
-                    NodeAttachment thisChild  =  createChildNodeAttachment( nodeData,   childNum ); 
+                    NodeAttachment thisChild  =  BranchHandlerUtilities.createChildNodeAttachment( nodeData,   childNum ); 
                     //record child node ID
                     IloCplex.NodeId nodeid = makeBranch(childNum,thisChild );
                     thisChild.nodeID =nodeid.toString();
@@ -89,7 +90,7 @@ public class BranchHandler extends IloCplex.BranchCallback {
                          
                                         
                     //convert the branching instructions into java data types, and record child info
-                    BranchingInstruction bi = createBranchingInstruction(   dirs[childNum], bounds[childNum], vars[childNum] );                    
+                    BranchingInstruction bi = BranchHandlerUtilities.createBranchingInstruction(   dirs[childNum], bounds[childNum], vars[childNum] );                    
                     if (childNum == ZERO) {
                         //update left child info
                         nodeData.leftChildNodeID=thisChild.nodeID;     
@@ -112,41 +113,5 @@ public class BranchHandler extends IloCplex.BranchCallback {
         
     }//end main
     
-        
-    private NodeAttachment createChildNodeAttachment (NodeAttachment parentNodeData,int childNum ){
-        NodeAttachment thisChild  = new NodeAttachment (); 
-        
-        thisChild.parentData = parentNodeData;
-        thisChild.depthFromSubtreeRoot=parentNodeData.depthFromSubtreeRoot + ONE;
-        
-
-          
-        return     thisChild;    
-    }
-    
-    private BranchingInstruction createBranchingInstruction(IloCplex.BranchDirection[ ]  dirs,double[ ] bounds, IloNumVar[] vars ) {
-        return new  BranchingInstruction(  getVarnames (  vars),   getVarDirections(dirs),   bounds);
-    }
-        
-    private String[] getVarnames (IloNumVar[] vars) {
-        String[] varnames = new  String[vars.length];
-        
-        int index = ZERO;
-        for (IloNumVar var : vars) {
-            varnames[index ++] = var.getName();
-        }
-        return varnames;
-    }
-    
-    private Boolean[] getVarDirections (IloCplex.BranchDirection[ ]  dirs) {
-        Boolean[] vardirs = new  Boolean[dirs.length];
-        
-        int index = ZERO;
-        for (IloCplex.BranchDirection dir : dirs) {
-            vardirs[index ++] = dir.equals( IloCplex.BranchDirection.Down);
-        }
-        return vardirs;
-    }
-    
-    
+ 
 }

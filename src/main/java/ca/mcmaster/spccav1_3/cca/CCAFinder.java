@@ -5,8 +5,9 @@
  */
 package ca.mcmaster.spccav1_3.cca;
 
+import ca.mcmaster.spccav1_3.utilities.CCAUtilities;
 import static ca.mcmaster.spccav1_3.Constants.*;
-import static ca.mcmaster.spccav1_3.cca.CCAUtils.*;
+import static ca.mcmaster.spccav1_3.utilities.CCAUtilities.*;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtree;
 import ca.mcmaster.spccav1_3.cplex.datatypes.BranchingInstruction;
 import ca.mcmaster.spccav1_3.cplex.datatypes.NodeAttachment;
@@ -189,7 +190,7 @@ public class CCAFinder {
             if (thisNode.ccaInformation.refCountLeft+ thisNode.ccaInformation.refCountRight>= count*(ONE-CCA_TOLERANCE_FRACTION)) {
                 //found a valid candidate
                 //add branching instructions, # of redundant LP solves needed and so on
-                CCAUtils.populateCCAStatistics(thisNode, this.allLeafs) ;
+                CCAUtilities.populateCCAStatistics(thisNode, this.allLeafs) ;
                 candidateCCANodes.add(thisNode.ccaInformation);                
             }
         }

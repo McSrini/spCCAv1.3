@@ -10,11 +10,19 @@ import ca.mcmaster.spccav1_3.cb.CBInstructionGenerator;
 import ca.mcmaster.spccav1_3.cca.CCAFinder;
 import ca.mcmaster.spccav1_3.cca.CCANode;
 import ca.mcmaster.spccav1_3.cb.CBInstructionTree;
+import ca.mcmaster.spccav1_3.cb.ReincarnationMaps;
 import ca.mcmaster.spccav1_3.cplex.callbacks.*;
 import ca.mcmaster.spccav1_3.cplex.datatypes.NodeAttachment;
+import static ca.mcmaster.spccav1_3.utilities.BranchHandlerUtilities.getLowerBounds;
+import static ca.mcmaster.spccav1_3.utilities.BranchHandlerUtilities.getUpperBounds;
+import ca.mcmaster.spccav1_3.utilities.CplexUtilities;
 import ilog.concert.IloException;
+import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
+import static ilog.cplex.IloCplex.CplexStatus.Feasible;
+import static ilog.cplex.IloCplex.CplexStatus.Optimal;
 import static java.lang.System.exit;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,11 +40,15 @@ public class ActiveSubtree {
     private static Logger logger=Logger.getLogger(ActiveSubtree.class);
         
     private IloCplex cplex   ;
+    //vars in the model
+    private IloNumVar[]  modelVars;
     
     //this is the branch handler for the CPLEX object
     private BranchHandler branchHandler;
     private NodeHandler nodeHandler;
     private LeafFetchingNodeHandler leafFetchNodeHandler;
+    private ReincarnationNodeHandler reincarnationNodeHandler;
+    private ReincarnationBranchHandler reincarnationBranchHandler;
     
     //our list of active leafs after each solve cycle
     private List<NodeAttachment> allActiveLeafs  ;     
@@ -65,16 +77,51 @@ public class ActiveSubtree {
         this.cplex= new IloCplex();   
         cplex.importModel(MPS_FILE_ON_DISK);
         
+        this.modelVars=CplexUtilities.getVariablesInModel(cplex);
+        
         //create all the call back handlers
         //these are used depending on which method is invoked
         
         branchHandler = new BranchHandler(    );
         nodeHandler = new NodeHandler(    );                
-        leafFetchNodeHandler = new LeafFetchingNodeHandler();
+        leafFetchNodeHandler = new LeafFetchingNodeHandler(); 
     
     }
     
-    public void solve(int leafCountLimit, double cutoff, int timeLimitMinutes) throws IloException{
+    public void mergeVarBounds (CCANode ccaNode) throws IloException {
+        Map< String, Double >   lowerBounds= getLowerBounds(ccaNode.branchingInstructionList);
+        Map< String, Double >   upperBounds= getUpperBounds(ccaNode.branchingInstructionList);
+        CplexUtilities.merge(cplex, lowerBounds, upperBounds);
+    }
+    
+    
+    public boolean isFeasible () throws IloException {
+        return this.cplex.getStatus().equals(Feasible);
+    }
+        
+    public boolean isOptimal () throws IloException {
+        return this.cplex.getStatus().equals(Optimal);
+    }
+    
+    public String getStatus () throws IloException {
+        return this.cplex.getStatus().toString();
+    }
+    
+    public double getObjectiveValue() throws IloException {
+        return this.cplex.getObjValue();
+    }
+    
+    //for testing
+    public void simpleSolve() throws IloException{
+        logger.debug("simpleSolve Started at "+LocalDateTime.now()) ;
+        this.cplex.use(new EmptyBranchHandler());  
+        cplex.solve();
+        logger.debug("simpleSolve completed at "+LocalDateTime.now()) ;
+    }
+        
+    public void solve(long leafCountLimit, double cutoff, int timeLimitMinutes) throws IloException{
+        
+        logger.debug(" Solve begins at "+LocalDateTime.now()) ;
         
         //before solving , reset the CCA finder object which 
         //has an index built upon the current solution tree nodes
@@ -91,6 +138,7 @@ public class ActiveSubtree {
         cplex.solve();
         
         //solve complete - now get the active leafs
+        this.cplex.use(branchHandler);
         this.cplex.use(leafFetchNodeHandler);  
         cplex.solve();
         allActiveLeafs = leafFetchNodeHandler.allLeafs;
@@ -98,11 +146,46 @@ public class ActiveSubtree {
         //initialize the CCA finder
         ccaFinder .initialize(allActiveLeafs);
         
+        logger.debug(" Solve concludes at "+LocalDateTime.now()) ;
+        
     }
     
-    public void prune(List<String> pruneList) {
-        //close CCA finder
+    //only for testing
+    public void setEmptyNodeCallback() throws IloException{
+          this.cplex.use(new EmptyNodeHandler());
+    }
+    
+    //this method is used when reincarnating a tree in a controlled fashion
+    //similar to solve(), but we use controlled branching instead of CPLEX default branching
+    public    void reincarnate ( Map<String, CCANode> instructionTreeAsMap, String ccaRootNodeID, double cutoff) throws IloException{
+        
+        //reset CCA finder
         this.ccaFinder.close();
+        
+        //set callbacks 
+        ReincarnationMaps reincarnationMaps=createReincarnationMaps(instructionTreeAsMap,ccaRootNodeID);
+        this.cplex.use( new ReincarnationBranchHandler(instructionTreeAsMap,  reincarnationMaps, this.modelVars));
+        this.cplex.use( new ReincarnationNodeHandler(reincarnationMaps));      
+        
+        setCutoff(  cutoff);
+        setParams (  MILLION);//no time limit
+         
+        cplex.solve();
+        
+        //solve complete - now get the active leafs
+        //restore regular branch handler
+        this.cplex.use(branchHandler);
+        this.cplex.use(leafFetchNodeHandler);  
+        cplex.solve();
+        allActiveLeafs = leafFetchNodeHandler.allLeafs;
+        
+        //initialize the CCA finder
+        ccaFinder .initialize(allActiveLeafs);
+    }
+    
+    public void prune(List<String> pruneList, boolean reInitializeCCAFinder) {
+        //close CCA finder
+        if (reInitializeCCAFinder) this.ccaFinder.close();
         
         //update allActiveLeafs
         List<NodeAttachment> newActiveLeafs = new ArrayList<NodeAttachment> ();
@@ -110,9 +193,12 @@ public class ActiveSubtree {
             if (!pruneList.contains(currentLeaf.nodeID) ) newActiveLeafs.add(currentLeaf);
         }
         allActiveLeafs=newActiveLeafs;
+        
+        //these will be removed from the IloCplex object
+        this.branchHandler.pruneList.addAll(pruneList);
                 
         //re-init the CCA finder
-        ccaFinder .initialize(allActiveLeafs);
+        if (reInitializeCCAFinder) ccaFinder .initialize(allActiveLeafs);
     }
     
     //if wanted leafs are not specified, every migratable leaf under this CCA is assumed to be wanted
@@ -161,5 +247,22 @@ public class ActiveSubtree {
         return this.branchHandler.bestReamining_LPValue;
     }
     
+    private  ReincarnationMaps createReincarnationMaps (Map<String, CCANode> instructionTreeAsMap, String ccaRootNodeID){
+        ReincarnationMaps   maps = new ReincarnationMaps ();
+                
+        for (String key : instructionTreeAsMap.keySet()){
+            if (instructionTreeAsMap.get(key).leftChildNodeID!=null){
+                //  this  needs to be branched upon , using the branching instructions in the CCA node
+                maps.oldToNew_NodeId_Map.put( key,null  );
+            }
+        }
+        
+        //both maps can start with original MIP which is always node ID -1
+        //but right now we are starting from the root CCA
+        maps.oldToNew_NodeId_Map.put( ccaRootNodeID ,MINUS_ONE_STRING  );
+        maps.newToOld_NodeId_Map.put( MINUS_ONE_STRING,ccaRootNodeID  );
+        
+        return maps;
+    }
  
 }

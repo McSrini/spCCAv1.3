@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package ca.mcmaster.spccav1_3.cca;
+package ca.mcmaster.spccav1_3.utilities;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
 import ca.mcmaster.spccav1_3.cplex.datatypes.*;
@@ -13,7 +13,7 @@ import java.util.*;
  *
  * @author tamvadss
  */
-public class CCAUtils {
+public class CCAUtilities {
     
     public static void  populateCCAStatistics(NodeAttachment thisNode, List<NodeAttachment> allLeafs) {
         

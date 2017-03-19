@@ -17,18 +17,21 @@ import org.apache.log4j.*;
 /**
  *
  * @author tamvadss
+ * 
+ * rdplu empty bh 1 hr 40 min
+ * rdplu my bh 
  */
-public class TestDriver {
+public class TestDriver_CCACB_NodeGeneration {
     
     private static  Logger logger = null;
     
     public static void main(String[] args) throws Exception {
             
-        logger=Logger.getLogger(TestDriver.class);
+        logger=Logger.getLogger(TestDriver_CCACB_NodeGeneration.class);
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver.class.getSimpleName()+ LOG_FILE_EXTENSION);
+            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCACB_NodeGeneration.class.getSimpleName()+ LOG_FILE_EXTENSION);
             rfa.setMaxBackupIndex(TEN*TEN);
             logger.addAppender(rfa);
             logger.setAdditivity(false);
@@ -38,25 +41,49 @@ public class TestDriver {
             exit(1);
         }
         
+        //ActiveSubtree activeSubtreeSimple = new ActiveSubtree () ;
+        //activeSubtreeSimple.simpleSolve();
+        
         ActiveSubtree activeSubtree = new ActiveSubtree () ;
-        activeSubtree.solve(TOTAL_LEAFS_IN_SOLUTION_TREE, PLUS_INFINITY, TEN* TWO);
+        activeSubtree.solve( TOTAL_LEAFS_IN_SOLUTION_TREE, PLUS_INFINITY, MILLION);
         
         List<CCANode> candidateCCANodes =activeSubtree.getCandidateCCANodes( NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE);
         for (CCANode ccaNode :candidateCCANodes ){
             logger.debug (ccaNode) ;              
         }
+        
+        //create a new active subtree wrooted at node 12
+        /*logger.debug ("Creating new IloCplex rooted at node 4") ;     
+        ActiveSubtree activeSubtreeFour = new ActiveSubtree () ;
+        activeSubtreeFour.mergeVarBounds(candidateCCANodes.get(ZERO));        
+        exit(0);*/
+
          
         CBInstructionTree tree = activeSubtree.getCBTree(candidateCCANodes.get(ZERO));
         
         tree.print();
         
         logger.debug ("Pruning leafs under CB tree") ;         
-        activeSubtree.prune( tree.pruneList);
+        activeSubtree.prune( tree.pruneList, true);
+        
+        //create new tree using CB instructions
+        logger.debug ("create new tree using CB instructions") ;         
+        ActiveSubtree activeSubtreeNew = new ActiveSubtree () ;
+        activeSubtreeNew.mergeVarBounds(candidateCCANodes.get(ZERO));
+        activeSubtreeNew.reincarnate( tree.asMap(),candidateCCANodes.get(ZERO).nodeID  , PLUS_INFINITY );
+        logger.debug ("Solving node 8 reincarnated using CB instructions") ;    
+        activeSubtreeNew.solve(PLUS_INFINITY,PLUS_INFINITY,TEN*TEN*TWO);
+        logger.debug ("Solution for node 8 reincarnated using CB instructions" +
+                 ( activeSubtreeNew.isFeasible()||activeSubtreeNew.isOptimal()? activeSubtreeNew.getObjectiveValue():-ONE) );    
+        exit(0);
+        
         
         candidateCCANodes = activeSubtree.getCandidateCCANodes( Arrays.asList(  "Node21", "Node22", "Node25","Node28", "Node29", "Node30"));
          for (CCANode ccaNode :candidateCCANodes ){
             logger.debug (ccaNode) ;              
         }
+         
+
          
         tree = activeSubtree.getCBTree(candidateCCANodes.get(ZERO),Arrays.asList(  "Node21", "Node22", "Node25","Node28", "Node29", "Node30") );
         

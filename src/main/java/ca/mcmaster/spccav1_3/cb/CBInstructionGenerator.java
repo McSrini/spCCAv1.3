@@ -5,6 +5,7 @@
  */
 package ca.mcmaster.spccav1_3.cb;
 
+import ca.mcmaster.spccav1_3.utilities.CCAUtilities;
 import static ca.mcmaster.spccav1_3.Constants.*;
 import ca.mcmaster.spccav1_3.cca.*;
 import ca.mcmaster.spccav1_3.cplex.datatypes.NodeAttachment;
@@ -75,7 +76,7 @@ public class CBInstructionGenerator {
         //then make a recursive call on the kids unless the kids happen to be leafs
         //Any CCA node [i.e non-leaf] must have its properties populated
         //We only create CCA nodes
-        if (tree.ccaRoot.getPackingFactor()> CCA_PACKING_FACTOR_MAXIMUM  ){
+        if (tree.ccaRoot.getPackingFactor()> CCA_PACKING_FACTOR_MAXIMUM_ALLOWED  ){
              
             if (tree.ccaRoot.refCountLeft>ZERO){
                 
@@ -107,7 +108,7 @@ public class CBInstructionGenerator {
                     //create CCA node in the tree and make recursive call
                     
                     //populate CCA information
-                    CCAUtils.populateCCAStatistics(currentNode, this.allActiveLeafs) ;
+                    CCAUtilities.populateCCAStatistics(currentNode, this.allActiveLeafs) ;
                     //make the link
                     tree.leftSubTree = new CBInstructionTree(currentNode.ccaInformation);
                     //make recursive call
@@ -149,7 +150,7 @@ public class CBInstructionGenerator {
                     //create CCA node in the tree and make recursive call
                     
                     //populate CCA information
-                    CCAUtils.populateCCAStatistics(currentNode, this.allActiveLeafs) ;
+                    CCAUtilities.populateCCAStatistics(currentNode, this.allActiveLeafs) ;
                     //make the link
                     tree.rightSubtree = new CBInstructionTree(currentNode.ccaInformation);
                     //make recursive call
@@ -164,7 +165,12 @@ public class CBInstructionGenerator {
             } 
             
             
-        }//end packing factor
+        } else {
+            
+            //packing factor was tight enough , so no CB instructions
+            //Therefore we must add all this node's descendants into the prune list
+            pruneList.addAll(tree.ccaRoot.pruneList);
+        }
         
         return tree;
     }

@@ -23,9 +23,11 @@ public class Constants {
     public static final int FOUR = 4;    
     public static final int TEN = 10;  
     public static final int SIXTY = 60;  
+    public static final int MILLION = 1000000;  
     public static final long PLUS_INFINITY = Long.MAX_VALUE;
     public static final long MINUS_INFINITY = Long.MIN_VALUE;
     
+    //public static  String MPS_FILE_ON_DISK =  "F:\\temporary files here\\rd-rplusc-21.mps";
     public static  String MPS_FILE_ON_DISK =  "F:\\temporary files here\\atlanta-ip.mps";
     public static final String LOG_FOLDER="F:\\temporary files here\\logs\\testing\\ccav1_3\\";
     public static final String LOG_FILE_EXTENSION = ".log";
@@ -33,7 +35,7 @@ public class Constants {
     public static final boolean IS_MAXIMIZATION = false;
      
     //CCA represents this many nodes
-    public static final  int NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE  =  6;     
+    public static    int NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE  =  6;     
     //remove after testing
     //List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node25", "Node23", "Node24","Node13", "Node29", "Node30");      
     public static final List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node15", "Node21", "Node22", "Node25","Node28", "Node29", "Node30");      
@@ -44,9 +46,9 @@ public class Constants {
     
     //CCA subtree allowed to have slightly less good leafs than asked for in NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE 
     public static final double CCA_TOLERANCE_FRACTION =  0.15;
-    public static final double CCA_PACKING_FACTOR_MAXIMUM =  0.0;
+    public static final double CCA_PACKING_FACTOR_MAXIMUM_ALLOWED =  0.5;
     
     //for testing
-    public static final boolean BackTrack = true;
+    public static   boolean BackTrack = true;
     
 }

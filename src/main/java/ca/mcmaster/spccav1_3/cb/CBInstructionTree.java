@@ -31,6 +31,9 @@ public class CBInstructionTree {
     //here is the list of leafs to prune, if you migrate this CB tree
     public List<String> pruneList = new ArrayList<String> ();
     
+    //useful to  convert to Map
+    public Map<String, CCANode> treeAsMap = new LinkedHashMap<String,CCANode>();
+    
     static {
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
@@ -49,6 +52,14 @@ public class CBInstructionTree {
         ccaRoot=root;
     }
     
+    public Map<String, CCANode> asMap (){
+        asMap(this);
+        return this.treeAsMap;
+    }
+    
+    public String getRootNodeID (){
+        return this.ccaRoot.nodeID;
+    }
     
     public void print (){
         print (this);
@@ -66,4 +77,12 @@ public class CBInstructionTree {
         if (tree.leftSubTree!=null) print(tree.leftSubTree);
         if (tree.rightSubtree!=null)print(tree.rightSubtree);
     }
+       
+    private void asMap (CBInstructionTree tree){
+        CCANode ccaRoot = tree.ccaRoot;
+        this.treeAsMap.put(ccaRoot.nodeID , ccaRoot );
+        if (tree.leftSubTree!=null) asMap (  tree.leftSubTree);
+        if (tree.rightSubtree!=null) asMap (  tree.rightSubtree);
+    }
+       
 }

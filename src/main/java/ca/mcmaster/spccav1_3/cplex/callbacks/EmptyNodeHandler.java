@@ -21,7 +21,7 @@ import org.apache.log4j.RollingFileAppender;
  *
  * @author tamvadss
  */
-public class NodeHandler extends IloCplex.NodeCallback {
+public class EmptyNodeHandler extends IloCplex.NodeCallback {
 
     public long activeLeafCount=ONE;
     public long activeLeafCount_LIMIT=PLUS_INFINITY;
@@ -29,18 +29,12 @@ public class NodeHandler extends IloCplex.NodeCallback {
     protected void main() throws IloException {
         if(getNremainingNodes64()> ZERO){
             
-            activeLeafCount= getNremainingNodes64();    
-            if (activeLeafCount >= activeLeafCount_LIMIT) {
-                 
-                abort();
-            }
+            
             
         }
     }
     
-    public void setLeafCountLimit (long limit) {
-        activeLeafCount_LIMIT= limit;
-    }
+   
     
 
 }
