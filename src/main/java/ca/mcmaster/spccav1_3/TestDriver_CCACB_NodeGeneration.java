@@ -59,7 +59,7 @@ public class TestDriver_CCACB_NodeGeneration {
         exit(0);*/
 
          
-        CBInstructionTree tree = activeSubtree.getCBTree(candidateCCANodes.get(ZERO));
+        CBInstructionTree tree = activeSubtree.getCBInstructionTree(candidateCCANodes.get(ZERO));
         
         tree.print();
         
@@ -69,7 +69,7 @@ public class TestDriver_CCACB_NodeGeneration {
         //create new tree using CB instructions
         logger.debug ("create new tree using CB instructions") ;         
         ActiveSubtree activeSubtreeNew = new ActiveSubtree () ;
-        activeSubtreeNew.mergeVarBounds(candidateCCANodes.get(ZERO));
+        activeSubtreeNew.mergeVarBounds(candidateCCANodes.get(ZERO), activeSubtree.instructionsFromOriginalMip);
         activeSubtreeNew.reincarnate( tree.asMap(),candidateCCANodes.get(ZERO).nodeID  , PLUS_INFINITY );
         logger.debug ("Solving node 8 reincarnated using CB instructions") ;    
         activeSubtreeNew.solve(PLUS_INFINITY,PLUS_INFINITY,TEN*TEN*TWO);
@@ -85,7 +85,7 @@ public class TestDriver_CCACB_NodeGeneration {
          
 
          
-        tree = activeSubtree.getCBTree(candidateCCANodes.get(ZERO),Arrays.asList(  "Node21", "Node22", "Node25","Node28", "Node29", "Node30") );
+        tree = activeSubtree.getCBInstructionTree(candidateCCANodes.get(ZERO),Arrays.asList(  "Node21", "Node22", "Node25","Node28", "Node29", "Node30") );
         
         tree.print();
         

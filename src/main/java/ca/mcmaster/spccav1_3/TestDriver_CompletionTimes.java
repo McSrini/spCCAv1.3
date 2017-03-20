@@ -49,7 +49,6 @@ public class TestDriver_CompletionTimes {
         //activeSubtreeSimple.simpleSolve();
         
         ActiveSubtree activeSubtree = new ActiveSubtree () ;
-        activeSubtree.setEmptyNodeCallback();
         activeSubtree.solve(PLUS_INFINITY, PLUS_INFINITY, MILLION);
         logger.debug("Solution is "+activeSubtree.getObjectiveValue());
         
@@ -60,7 +59,7 @@ public class TestDriver_CompletionTimes {
             logger.debug (ccaNode) ;              
         }
          
-        CBInstructionTree tree = activeSubtree.getCBTree(candidateCCANodes.get(ZERO));
+        CBInstructionTree tree = activeSubtree.getCBInstructionTree(candidateCCANodes.get(ZERO));
         
         tree.print();
         
@@ -72,7 +71,7 @@ public class TestDriver_CompletionTimes {
             logger.debug (ccaNode) ;              
         }
          
-        tree = activeSubtree.getCBTree(candidateCCANodes.get(ZERO),Arrays.asList(  "Node21", "Node22", "Node25","Node28", "Node29", "Node30") );
+        tree = activeSubtree.getCBInstructionTree(candidateCCANodes.get(ZERO),Arrays.asList(  "Node21", "Node22", "Node25","Node28", "Node29", "Node30") );
         
         tree.print();
         

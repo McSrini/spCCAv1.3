@@ -12,6 +12,7 @@ import ca.mcmaster.spccav1_3.cca.CCANode;
 import ca.mcmaster.spccav1_3.cb.CBInstructionTree;
 import ca.mcmaster.spccav1_3.cb.ReincarnationMaps;
 import ca.mcmaster.spccav1_3.cplex.callbacks.*;
+import ca.mcmaster.spccav1_3.cplex.datatypes.BranchingInstruction;
 import ca.mcmaster.spccav1_3.cplex.datatypes.NodeAttachment;
 import static ca.mcmaster.spccav1_3.utilities.BranchHandlerUtilities.getLowerBounds;
 import static ca.mcmaster.spccav1_3.utilities.BranchHandlerUtilities.getUpperBounds;
@@ -58,6 +59,10 @@ public class ActiveSubtree {
     
     private CBInstructionGenerator cbInstructionGenerator ;
     
+    //this IloCplex object, if constructed by merging variable bounds, is differnt from the original MIP by thse bounds
+    //When extracting a CCA node from this Active Subtree , keep in mind that the CCA node branching instructions should be combined with these instructions
+    public List<BranchingInstruction> instructionsFromOriginalMip = new ArrayList<BranchingInstruction>();
+    
     static {
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
@@ -88,9 +93,13 @@ public class ActiveSubtree {
     
     }
     
-    public void mergeVarBounds (CCANode ccaNode) throws IloException {
-        Map< String, Double >   lowerBounds= getLowerBounds(ccaNode.branchingInstructionList);
-        Map< String, Double >   upperBounds= getUpperBounds(ccaNode.branchingInstructionList);
+    public void mergeVarBounds (CCANode ccaNode, List<BranchingInstruction> instructionsFromOriginalMip) throws IloException {
+        List<BranchingInstruction> cumulativeInstructions = new ArrayList<BranchingInstruction>();
+        cumulativeInstructions.addAll(ccaNode.branchingInstructionList);
+        cumulativeInstructions.addAll(instructionsFromOriginalMip);
+        this.instructionsFromOriginalMip =cumulativeInstructions;
+        Map< String, Double >   lowerBounds= getLowerBounds(cumulativeInstructions);
+        Map< String, Double >   upperBounds= getUpperBounds(cumulativeInstructions);
         CplexUtilities.merge(cplex, lowerBounds, upperBounds);
     }
     
@@ -129,7 +138,7 @@ public class ActiveSubtree {
         
         //set callbacks for regular solution
         this.cplex.use(branchHandler);
-        this.cplex.use(nodeHandler);      
+        //this.cplex.use(nodeHandler);      
         
         setCutoff(  cutoff);
         setParams (  timeLimitMinutes);
@@ -202,7 +211,7 @@ public class ActiveSubtree {
     }
     
     //if wanted leafs are not specified, every migratable leaf under this CCA is assumed to be wanted
-    public CBInstructionTree getCBTree (CCANode ccaNode ) {
+    public CBInstructionTree getCBInstructionTree (CCANode ccaNode ) {
         List<String> wantedLeafs = new ArrayList<String> ();
         for (NodeAttachment node :  this.allActiveLeafs){
             if (ccaNode.pruneList.contains(node.nodeID) && node.isMigrateable) wantedLeafs.add(node.nodeID);
@@ -211,7 +220,7 @@ public class ActiveSubtree {
         return cbInstructionGenerator.generateInstructions( );
     }
         
-    public CBInstructionTree getCBTree (CCANode ccaNode, List<String> wantedLeafs) {
+    public CBInstructionTree getCBInstructionTree (CCANode ccaNode, List<String> wantedLeafs) {
         
         cbInstructionGenerator = new CBInstructionGenerator( ccaNode,     allActiveLeafs,   wantedLeafs) ;
         return cbInstructionGenerator.generateInstructions( );
