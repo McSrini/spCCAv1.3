@@ -90,14 +90,14 @@ public class CBInstructionGenerator {
                     //the first skip is to the left
                     //any subsequent skips are determined by the side which has a non-zero ref-count
                     if (index == ZERO){
-                        tree.ccaRoot.leftChildBranchingInstructions.add( currentNode.branchingInstructionForLeftChild);
+                        tree.ccaRoot.leftChildBranchingInstructions.add( currentNode.getBranchingInstructionForLeftChild());
                         currentNode = currentNode.leftChildRef;
                     } else {
                         if (currentNode.ccaInformation.refCountLeft>ZERO) {
-                            tree.ccaRoot.leftChildBranchingInstructions.add( currentNode.branchingInstructionForLeftChild);
+                            tree.ccaRoot.leftChildBranchingInstructions.add( currentNode.getBranchingInstructionForLeftChild());
                             currentNode = currentNode.leftChildRef;
                         }  else {
-                            tree.ccaRoot.leftChildBranchingInstructions.add( currentNode.branchingInstructionForRightChild);
+                            tree.ccaRoot.leftChildBranchingInstructions.add( currentNode.getBranchingInstructionForRightChild());
                             currentNode = currentNode.rightChildRef;
                         } 
                     }
@@ -132,14 +132,14 @@ public class CBInstructionGenerator {
                 for (int index = ZERO ; index <= tree.ccaRoot.skipCountRight; index ++){
                     
                     if (index == ZERO){
-                        tree.ccaRoot.rightChildBranchingInstructions.add( currentNode.branchingInstructionForRightChild);
+                        tree.ccaRoot.rightChildBranchingInstructions.add( currentNode.getBranchingInstructionForRightChild());
                         currentNode = currentNode.rightChildRef;
                     } else {
                         if (currentNode.ccaInformation.refCountLeft>ZERO) {
-                            tree.ccaRoot.rightChildBranchingInstructions.add( currentNode.branchingInstructionForLeftChild);
+                            tree.ccaRoot.rightChildBranchingInstructions.add( currentNode.getBranchingInstructionForLeftChild());
                             currentNode = currentNode.leftChildRef;
                         }  else {
-                            tree.ccaRoot.rightChildBranchingInstructions.add( currentNode.branchingInstructionForRightChild);
+                            tree.ccaRoot.rightChildBranchingInstructions.add( currentNode.getBranchingInstructionForRightChild());
                             currentNode = currentNode.rightChildRef;
                         }                     
                     }

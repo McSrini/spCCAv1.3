@@ -45,14 +45,14 @@ public class TestDriver_CCACB_NodeGeneration {
         //activeSubtreeSimple.simpleSolve();
         
         ActiveSubtree activeSubtree = new ActiveSubtree () ;
-        activeSubtree.solve( TOTAL_LEAFS_IN_SOLUTION_TREE, PLUS_INFINITY, MILLION);
+        activeSubtree.solve( TOTAL_LEAFS_IN_SOLUTION_TREE, PLUS_INFINITY, MILLION, true);
         
         List<CCANode> candidateCCANodes =activeSubtree.getCandidateCCANodes( NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE);
         for (CCANode ccaNode :candidateCCANodes ){
             logger.debug (ccaNode) ;              
         }
         
-        //create a new active subtree wrooted at node 12
+        //create a new active subtree rooted at node 12
         /*logger.debug ("Creating new IloCplex rooted at node 4") ;     
         ActiveSubtree activeSubtreeFour = new ActiveSubtree () ;
         activeSubtreeFour.mergeVarBounds(candidateCCANodes.get(ZERO));        
@@ -70,9 +70,10 @@ public class TestDriver_CCACB_NodeGeneration {
         logger.debug ("create new tree using CB instructions") ;         
         ActiveSubtree activeSubtreeNew = new ActiveSubtree () ;
         activeSubtreeNew.mergeVarBounds(candidateCCANodes.get(ZERO), activeSubtree.instructionsFromOriginalMip);
+        //here is the cal that initiates controlled branching
         activeSubtreeNew.reincarnate( tree.asMap(),candidateCCANodes.get(ZERO).nodeID  , PLUS_INFINITY );
         logger.debug ("Solving node 8 reincarnated using CB instructions") ;    
-        activeSubtreeNew.solve(PLUS_INFINITY,PLUS_INFINITY,TEN*TEN*TWO);
+        activeSubtreeNew.solve(PLUS_INFINITY,PLUS_INFINITY,TEN*TEN*TWO, false);
         logger.debug ("Solution for node 8 reincarnated using CB instructions" +
                  ( activeSubtreeNew.isFeasible()||activeSubtreeNew.isOptimal()? activeSubtreeNew.getObjectiveValue():-ONE) );    
         exit(0);

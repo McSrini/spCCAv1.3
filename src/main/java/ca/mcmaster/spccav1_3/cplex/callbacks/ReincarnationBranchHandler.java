@@ -11,6 +11,7 @@ import static ca.mcmaster.spccav1_3.Constants.IS_MAXIMIZATION;
 import static ca.mcmaster.spccav1_3.Constants.LOG_FILE_EXTENSION;
 import static ca.mcmaster.spccav1_3.Constants.LOG_FOLDER;
 import static ca.mcmaster.spccav1_3.Constants.MINUS_INFINITY;
+import static ca.mcmaster.spccav1_3.Constants.ONE;
 import static ca.mcmaster.spccav1_3.Constants.PLUS_INFINITY;
 import static ca.mcmaster.spccav1_3.Constants.TWO;
 import static ca.mcmaster.spccav1_3.Constants.ZERO;
@@ -105,7 +106,9 @@ public class ReincarnationBranchHandler extends IloCplex.BranchCallback {
                     //apply the bound changes specific to this child
                     
                     //first create the child node attachment
-                    NodeAttachment thisChild  =  BranchHandlerUtilities.createChildNodeAttachment( nodeData,   childNum ); 
+                    NodeAttachment thisChild  =  new NodeAttachment (); 
+                    thisChild.parentData = nodeData;
+                    thisChild.depthFromSubtreeRoot=nodeData.depthFromSubtreeRoot + ONE;
                     
                     //now get the branching instructions in the CCA node for this child 
                     String oldParentNodeID = reincarnationMaps.newToOld_NodeId_Map.get(nodeData.nodeID);
@@ -132,16 +135,17 @@ public class ReincarnationBranchHandler extends IloCplex.BranchCallback {
                     //if ( BAD_MIGRATION_CANDIDATES_DURING_TESTING.contains( thisChild.nodeID))       thisChild.isMigrateable= false;
                          
                                         
-                    //convert the branching instructions into java data types, and record child info
-                    BranchingInstruction bi = BranchHandlerUtilities.createBranchingInstruction(   dirs[childNum], bounds[childNum], vars[childNum] );                    
                     if (childNum == ZERO) {
                         //update left child info
                         nodeData.leftChildNodeID=thisChild.nodeID;     
-                        nodeData.branchingInstructionForLeftChild =bi;
+                         
                     }else {
                         nodeData.rightChildNodeID  =thisChild.nodeID ;  
-                        nodeData.branchingInstructionForRightChild =bi;
+                         
                     }
+                    nodeData.branchingVars = vars;
+                    nodeData.branchingBounds=bounds;
+                    nodeData.branchingDirections =dirs;
                     
                     //for each kid created , update the reincarnation Maps
                     //cvn jk is boy////58655545185151512128884545  <<- comment from my daughter ! Think of it as a present ;an easter egg !

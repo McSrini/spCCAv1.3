@@ -21,7 +21,7 @@ import org.apache.log4j.RollingFileAppender;
  *
  * @author tamvadss
  */
-public class NodeHandler extends IloCplex.NodeCallback {
+public class RampUpNodeHandler extends IloCplex.NodeCallback {
 
     public long activeLeafCount=ONE;
     public long activeLeafCount_LIMIT=PLUS_INFINITY;

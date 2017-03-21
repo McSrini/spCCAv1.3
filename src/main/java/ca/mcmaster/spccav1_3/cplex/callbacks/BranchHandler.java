@@ -32,7 +32,7 @@ public class BranchHandler extends IloCplex.BranchCallback {
     //list of nodes to be pruned
     public List<String> pruneList = new ArrayList<String>();
     
-    public double bestReamining_LPValue = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
+    //public double bestReamining_LPValue = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
     
     static {
         logger.setLevel(Level.DEBUG);
@@ -70,6 +70,11 @@ public class BranchHandler extends IloCplex.BranchCallback {
                 double[ ][] bounds = new double[TWO ][];
                 IloCplex.BranchDirection[ ][]  dirs = new  IloCplex.BranchDirection[ TWO][];
                 getBranches(  vars, bounds, dirs);
+                
+                //record left and right child branching conditions
+                nodeData.branchingVars = vars;
+                nodeData.branchingBounds=bounds;
+                nodeData.branchingDirections =dirs;
 
                 //now allow  both kids to spawn
                 for (int childNum = ZERO ;childNum<getNbranches();  childNum++) {   
@@ -77,29 +82,26 @@ public class BranchHandler extends IloCplex.BranchCallback {
                     //apply the bound changes specific to this child
                     
                     //first create the child node attachment
-                    NodeAttachment thisChild  =  BranchHandlerUtilities.createChildNodeAttachment( nodeData,   childNum ); 
+                    NodeAttachment thisChild  =  new NodeAttachment (); 
+                    thisChild.parentData = nodeData;
+                    thisChild.depthFromSubtreeRoot=nodeData.depthFromSubtreeRoot + ONE;
+                                                         
                     //record child node ID
                     IloCplex.NodeId nodeid = makeBranch(childNum,thisChild );
                     thisChild.nodeID =nodeid.toString();
                     
-                    logger.debug(" Node "+nodeData.nodeID + " created child "+  thisChild.nodeID + " varname " +   vars[childNum][ZERO].getName() + " bound " + bounds[childNum][ZERO] +   (dirs[childNum][ZERO].equals( IloCplex.BranchDirection.Down) ? " U":" L") ) ;
+                    //logger.debug(" Node "+nodeData.nodeID + " created child "+  thisChild.nodeID + " varname " +   vars[childNum][ZERO].getName() + " bound " + bounds[childNum][ZERO] +   (dirs[childNum][ZERO].equals( IloCplex.BranchDirection.Down) ? " U":" L") ) ;
                     
                     //for testing purposes, mark some nodes as bad choices for migration
-                    if ( BAD_MIGRATION_CANDIDATES_DURING_TESTING.contains( thisChild.nodeID))   
-                        thisChild.isMigrateable= false;
+                    if ( BAD_MIGRATION_CANDIDATES_DURING_TESTING.contains( thisChild.nodeID))       thisChild.isMigrateable= false;
                          
                                         
-                    //convert the branching instructions into java data types, and record child info
-                    BranchingInstruction bi = BranchHandlerUtilities.createBranchingInstruction(   dirs[childNum], bounds[childNum], vars[childNum] );                    
                     if (childNum == ZERO) {
                         //update left child info
-                        nodeData.leftChildNodeID=thisChild.nodeID;     
-                        nodeData.branchingInstructionForLeftChild =bi;
+                        nodeData.leftChildNodeID=thisChild.nodeID;   
                     }else {
-                        nodeData.rightChildNodeID  =thisChild.nodeID ;  
-                        nodeData.branchingInstructionForRightChild =bi;
+                        nodeData.rightChildNodeID  =thisChild.nodeID ;                          
                     }
-                    
 
                     
                 }//end for 2 kids
@@ -107,11 +109,10 @@ public class BranchHandler extends IloCplex.BranchCallback {
                 
             }//end if else
             
-            this.bestReamining_LPValue = getBestObjValue();
+            //this.bestReamining_LPValue = getBestObjValue();
             
         } // end if getNbranches()> 0
         
     }//end main
     
- 
 }

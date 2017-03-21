@@ -48,11 +48,7 @@ public class EmptyBranchHandler extends IloCplex.BranchCallback {
     }
  
     protected void main() throws IloException {
-        
-        if ( getNbranches()> 0 ){  
-                     
-        } // end if getNbranches()> 0
-        
+     
     }//end main
     
  

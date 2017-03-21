@@ -7,6 +7,7 @@ package ca.mcmaster.spccav1_3.utilities;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
 import ca.mcmaster.spccav1_3.cplex.datatypes.*;
+import ilog.cplex.IloCplex;
 import java.util.*; 
 
 /**
@@ -102,10 +103,13 @@ public class CCAUtilities {
         while (parent !=null){
             
             if (parent.rightChildRef!=null && parent.rightChildNodeID.equals( thisNode.nodeID)) {
-                branchingInstructions.add(parent.branchingInstructionForRightChild) ;
+                //must be right child
+                 
+                branchingInstructions.add( parent.getBranchingInstructionForRightChild()) ;
             } else {
                 //must be the left child
-                 branchingInstructions.add(parent.branchingInstructionForLeftChild) ;
+                 
+                branchingInstructions.add(parent.getBranchingInstructionForLeftChild()) ;
             }
             
             thisNode = parent;

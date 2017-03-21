@@ -46,7 +46,7 @@ public class ActiveSubtree {
     
     //this is the branch handler for the CPLEX object
     private BranchHandler branchHandler;
-    private NodeHandler nodeHandler;
+    private RampUpNodeHandler rampUpNodeHandler;
     private LeafFetchingNodeHandler leafFetchNodeHandler;
     private ReincarnationNodeHandler reincarnationNodeHandler;
     private ReincarnationBranchHandler reincarnationBranchHandler;
@@ -88,7 +88,7 @@ public class ActiveSubtree {
         //these are used depending on which method is invoked
         
         branchHandler = new BranchHandler(    );
-        nodeHandler = new NodeHandler(    );                
+        rampUpNodeHandler = new RampUpNodeHandler(    );                
         leafFetchNodeHandler = new LeafFetchingNodeHandler(); 
     
     }
@@ -121,14 +121,16 @@ public class ActiveSubtree {
     }
     
     //for testing
-    public void simpleSolve() throws IloException{
+    public void simpleSolve(int timeLimitMinutes) throws IloException{
         logger.debug("simpleSolve Started at "+LocalDateTime.now()) ;
+        cplex.clearCallbacks();
         this.cplex.use(new EmptyBranchHandler());  
+        setParams (  timeLimitMinutes);
         cplex.solve();
         logger.debug("simpleSolve completed at "+LocalDateTime.now()) ;
-    }
+    }   
         
-    public void solve(long leafCountLimit, double cutoff, int timeLimitMinutes) throws IloException{
+    public void solve(long leafCountLimit, double cutoff, int timeLimitMinutes, boolean isRampUp) throws IloException{
         
         logger.debug(" Solve begins at "+LocalDateTime.now()) ;
         
@@ -137,13 +139,18 @@ public class ActiveSubtree {
         this.ccaFinder.close();
         
         //set callbacks for regular solution
+        cplex.clearCallbacks();
         this.cplex.use(branchHandler);
-        //this.cplex.use(nodeHandler);      
+        
+        if (isRampUp) {
+            rampUpNodeHandler.setLeafCountLimit(leafCountLimit);
+            this.cplex.use(rampUpNodeHandler) ;
+        }  
+        
         
         setCutoff(  cutoff);
         setParams (  timeLimitMinutes);
-        
-        nodeHandler.setLeafCountLimit(leafCountLimit);
+                
         cplex.solve();
         
         //solve complete - now get the active leafs
@@ -158,12 +165,7 @@ public class ActiveSubtree {
         logger.debug(" Solve concludes at "+LocalDateTime.now()) ;
         
     }
-    
-    //only for testing
-    public void setEmptyNodeCallback() throws IloException{
-          this.cplex.use(new EmptyNodeHandler());
-    }
-    
+ 
     //this method is used when reincarnating a tree in a controlled fashion
     //similar to solve(), but we use controlled branching instead of CPLEX default branching
     public    void reincarnate ( Map<String, CCANode> instructionTreeAsMap, String ccaRootNodeID, double cutoff) throws IloException{
@@ -248,13 +250,13 @@ public class ActiveSubtree {
     
     public void setParams (int timeLimitMinutes) throws IloException {
         cplex.setParam(IloCplex.Param.MIP.Strategy.File, ZERO); 
-        cplex.setParam(IloCplex.Param.TimeLimit, timeLimitMinutes*SIXTY); 
+        if (timeLimitMinutes>ZERO) cplex.setParam(IloCplex.Param.TimeLimit, timeLimitMinutes*SIXTY); 
         if (BackTrack) cplex.setParam( IloCplex.Param.MIP.Strategy.Backtrack,  ZERO); 
     }
     
-    public double getBestRemaining_LPValue(){
+    /*public double getBestRemaining_LPValue(){
         return this.branchHandler.bestReamining_LPValue;
-    }
+    }*/
     
     private  ReincarnationMaps createReincarnationMaps (Map<String, CCANode> instructionTreeAsMap, String ccaRootNodeID){
         ReincarnationMaps   maps = new ReincarnationMaps ();

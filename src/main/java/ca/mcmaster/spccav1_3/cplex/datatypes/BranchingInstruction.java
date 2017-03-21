@@ -25,7 +25,7 @@ public class BranchingInstruction {
         
     }
         
-    public     BranchingInstruction(String[] names, Boolean[] dirs, double[] bounds) {
+    public       BranchingInstruction (String[] names, Boolean[] dirs, double[] bounds) {
         for (String name : names) {
             varNames.add(name);
         }

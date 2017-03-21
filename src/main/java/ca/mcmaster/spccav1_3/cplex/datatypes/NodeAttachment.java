@@ -7,6 +7,8 @@ package ca.mcmaster.spccav1_3.cplex.datatypes;
 
 import static ca.mcmaster.spccav1_3.Constants.*; 
 import ca.mcmaster.spccav1_3.cca.*;
+import ilog.concert.IloNumVar;
+import ilog.cplex.IloCplex;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,8 +26,11 @@ public class NodeAttachment {
     public  NodeAttachment  parentData = null;
     
     //at node creation time, node has no kids, but there can be kids later
-    public BranchingInstruction branchingInstructionForLeftChild  ;
-    public BranchingInstruction branchingInstructionForRightChild ;
+    //Store the brancging information for both kids
+    public  IloNumVar[][] branchingVars  ;
+    public  double[ ][] branchingBounds  ;
+    public  IloCplex.BranchDirection[ ][]  branchingDirections ;
+        
     //ID of kids
     public  String  leftChildNodeID = null, rightChildNodeID=null;
      
@@ -39,6 +44,32 @@ public class NodeAttachment {
     public CCANode ccaInformation = null;
     public  NodeAttachment leftChildRef = null, rightChildRef = null;
     
+    //converts vars bounds dirs into java format
+    public BranchingInstruction getBranchingInstructionForLeftChild(){
+         
+        int size = this.branchingVars[ZERO].length;
+        String[] names = new String[size];
+        Boolean[] dirs = new Boolean[size];
+        for(int index= ZERO; index <size; index++){
+            names[index]= this.branchingVars[ZERO][index].getName();
+            dirs[index] = this.branchingDirections[ZERO][index].equals( IloCplex.BranchDirection.Down );
+        }
+        
+        return new BranchingInstruction( names, dirs, this.branchingBounds[ZERO]);
+    }
+    public BranchingInstruction getBranchingInstructionForRightChild(){
+         
+        int size = this.branchingVars[ONE].length;
+        String[] names = new String[size];
+        Boolean[] dirs = new Boolean[size];
+        for(int index= ZERO; index <size; index++){
+            names[index]= this.branchingVars[ONE][index].getName();
+            dirs[index] = this.branchingDirections[ONE][index].equals( IloCplex.BranchDirection.Down );
+        }
+        
+        return new BranchingInstruction( names, dirs, this.branchingBounds[ONE]);
+    }
+    
     public String toString(){
         String result = EMPTY_STRING;
         result += "NodeID "+ nodeID;
@@ -47,7 +78,7 @@ public class NodeAttachment {
                  
         result += "\n";
         
-        
+        /*
         if (leftChildNodeID!=null) {
             result += branchingInstructionForLeftChild;
             result += "\n";
@@ -55,7 +86,7 @@ public class NodeAttachment {
         if (rightChildNodeID!=null){
             result +=branchingInstructionForRightChild;
             result += "\n";
-        }
+        }*/
         
         //result += "\n";
         return result;

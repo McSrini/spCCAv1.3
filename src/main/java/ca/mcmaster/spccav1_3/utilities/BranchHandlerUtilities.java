@@ -44,41 +44,8 @@ public   class BranchHandlerUtilities {
           
     }
         
-           
-    public static NodeAttachment createChildNodeAttachment (NodeAttachment parentNodeData,int childNum ){
-        NodeAttachment thisChild  = new NodeAttachment (); 
-        
-        thisChild.parentData = parentNodeData;
-        thisChild.depthFromSubtreeRoot=parentNodeData.depthFromSubtreeRoot + ONE;
-        
-
-          
-        return     thisChild;    
-    }
+     
     
-    public static BranchingInstruction createBranchingInstruction(IloCplex.BranchDirection[ ]  dirs,double[ ] bounds, IloNumVar[] vars ) {
-        return new  BranchingInstruction(  getVarnames (  vars),   getVarDirections(dirs),   bounds);
-    }
-        
-    public static String[] getVarnames (IloNumVar[] vars) {
-        String[] varnames = new  String[vars.length];
-        
-        int index = ZERO;
-        for (IloNumVar var : vars) {
-            varnames[index ++] = var.getName();
-        }
-        return varnames;
-    }
-    
-    public static Boolean[] getVarDirections (IloCplex.BranchDirection[ ]  dirs) {
-        Boolean[] vardirs = new  Boolean[dirs.length];
-        
-        int index = ZERO;
-        for (IloCplex.BranchDirection dir : dirs) {
-            vardirs[index ++] = dir.equals( IloCplex.BranchDirection.Down);
-        }
-        return vardirs;
-    }
     
     //merge the braching instruction list  into array format used by CPLEX
     public static void mergeBranchingInstructionIntoArray ( List<BranchingInstruction> branchingInstructionList ,   
