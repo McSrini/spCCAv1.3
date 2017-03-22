@@ -42,14 +42,16 @@ public class TestDriver_CompletionTimes {
         }
         
         //change the MIP, backtrack 
-        MPS_FILE_ON_DISK =  "F:\\temporary files here\\msc98-ip.mps";
+        MPS_FILE_ON_DISK =  "F:\\temporary files here\\rd-rplusc-21.mps";
         BackTrack=false;
         
          
+        logger.debug("Starting simple solve  " );
         ActiveSubtree activeSubtreeSimple = new ActiveSubtree () ;
         activeSubtreeSimple.simpleSolve( -ONE);
+        logger.debug("Completed simple solve  " );
         
-        
+        logger.debug("Starting regular solve  " ); 
         ActiveSubtree activeSubtree = new ActiveSubtree () ;
         activeSubtree.solve(PLUS_INFINITY, PLUS_INFINITY,  -ONE, false);
         logger.debug("Solution is "+activeSubtree.getObjectiveValue());

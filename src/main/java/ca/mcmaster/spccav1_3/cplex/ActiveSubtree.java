@@ -59,7 +59,7 @@ public class ActiveSubtree {
     
     private CBInstructionGenerator cbInstructionGenerator ;
     
-    //this IloCplex object, if constructed by merging variable bounds, is differnt from the original MIP by thse bounds
+    //this IloCplex object, if constructed by merging variable bounds, is differnt from the original MIP by these bounds
     //When extracting a CCA node from this Active Subtree , keep in mind that the CCA node branching instructions should be combined with these instructions
     public List<BranchingInstruction> instructionsFromOriginalMip = new ArrayList<BranchingInstruction>();
     
@@ -249,7 +249,7 @@ public class ActiveSubtree {
     }
     
     public void setParams (int timeLimitMinutes) throws IloException {
-        cplex.setParam(IloCplex.Param.MIP.Strategy.File, ZERO); 
+        //cplex.setParam(IloCplex.Param.MIP.Strategy.File, ZERO); 
         if (timeLimitMinutes>ZERO) cplex.setParam(IloCplex.Param.TimeLimit, timeLimitMinutes*SIXTY); 
         if (BackTrack) cplex.setParam( IloCplex.Param.MIP.Strategy.Backtrack,  ZERO); 
     }

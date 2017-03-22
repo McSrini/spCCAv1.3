@@ -75,13 +75,13 @@ public class CplexUtilities {
                 if ( var.getUB() > newBound ){
                     //update the more restrictive upper bound
                     var.setUB( newBound );
-                    logger.info(" var " + varName + " set bound " + newBound ) ;
+                    logger.info(" var " + varName + " set upper bound " + newBound ) ;
                 }
             }else{
                 if ( var.getLB() < newBound){
                     //update the more restrictive lower bound
                     var.setLB(newBound);
-                    logger.info(" var " + varName + " set bound " + newBound ) ;
+                    logger.info(" var " + varName + " set lower bound " + newBound ) ;
                 }
             }               
         }

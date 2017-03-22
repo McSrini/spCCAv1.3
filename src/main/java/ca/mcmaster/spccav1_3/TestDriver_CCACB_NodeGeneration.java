@@ -44,10 +44,57 @@ public class TestDriver_CCACB_NodeGeneration {
         //ActiveSubtree activeSubtreeSimple = new ActiveSubtree () ;
         //activeSubtreeSimple.simpleSolve();
         
+        //TEST 1 - solve altanta-ip with backtrack =0 to > 18 leafs
         ActiveSubtree activeSubtree = new ActiveSubtree () ;
         activeSubtree.solve( TOTAL_LEAFS_IN_SOLUTION_TREE, PLUS_INFINITY, MILLION, true);
         
+        logger.debug ("TEST 2 - print CCA nodes having 6 good leafs") ;       
+        //TEST 2 - print CCA nodes having 6 good leafs
         List<CCANode> candidateCCANodes =activeSubtree.getCandidateCCANodes( NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE);
+        for (CCANode ccaNode :candidateCCANodes ){
+            logger.debug (ccaNode) ;              
+        }
+        
+        logger.debug ("TEST 3 - print CCA nodes having 3 good leafs") ;       
+        //TEST 3 - print CCA nodes having 3 good leafs
+        candidateCCANodes =activeSubtree.getCandidateCCANodes( THREE);
+        for (CCANode ccaNode :candidateCCANodes ){
+            logger.debug (ccaNode) ;              
+        }
+        
+        //TEST 4 - print CCA nodes having 4 good leafs
+        logger.debug ("TEST 4 - print CCA nodes having 4 good leafs") ;       
+        candidateCCANodes =activeSubtree.getCandidateCCANodes( FOUR);
+        for (CCANode ccaNode :candidateCCANodes ){
+            logger.debug (ccaNode) ;              
+        }
+        
+
+        
+        //TEST 6 - create a new Active subtree with this CCA node, and solve for some time
+        /*logger.debug ("TEST 6 ") ; 
+        ActiveSubtree activeSubtreeT6 = new ActiveSubtree () ;
+        activeSubtreeT6.mergeVarBounds(candidateCCANodes.get(ZERO), activeSubtree.instructionsFromOriginalMip);  
+        activeSubtreeT6.solve( TWO*TWO*THREE, PLUS_INFINITY, TEN, false);*/
+        
+        //test 7 
+        logger.debug ("TEST 7 ") ; 
+        candidateCCANodes =activeSubtree.getCandidateCCANodes( FOUR);
+        for (CCANode ccaNode :candidateCCANodes ){
+            logger.debug (ccaNode) ;              
+        }
+        ActiveSubtree activeSubtreeT7 = new ActiveSubtree () ;
+        activeSubtreeT7.mergeVarBounds(candidateCCANodes.get(ZERO), activeSubtree.instructionsFromOriginalMip);  
+        //solve it for some time
+        //activeSubtreeT7.solve( TWO*TWO*THREE, PLUS_INFINITY, TEN, false);
+        
+        logger.debug ("CCA TESTS COMPLETE, now test CB ") ; 
+        
+                
+        //TEST 5 - print CCA nodes having 8 good leafs, CCA_TOLERANCE_FRACTION = 0.15
+        logger.debug ("TEST 5 - print CCA nodes having 8 good leafs and CCA_TOLERANCE_FRACTION =0.15") ; 
+        CCA_TOLERANCE_FRACTION= 0.15;
+        candidateCCANodes =activeSubtree.getCandidateCCANodes( TWO*FOUR);
         for (CCANode ccaNode :candidateCCANodes ){
             logger.debug (ccaNode) ;              
         }
@@ -60,25 +107,31 @@ public class TestDriver_CCACB_NodeGeneration {
 
          
         CBInstructionTree tree = activeSubtree.getCBInstructionTree(candidateCCANodes.get(ZERO));
-        
+         
+        logger.debug ("Printing controlled branching instructions") ; 
         tree.print();
+        
+       
         
         logger.debug ("Pruning leafs under CB tree") ;         
         activeSubtree.prune( tree.pruneList, true);
         
+         //TEST 8        
         //create new tree using CB instructions
         logger.debug ("create new tree using CB instructions") ;         
         ActiveSubtree activeSubtreeNew = new ActiveSubtree () ;
         activeSubtreeNew.mergeVarBounds(candidateCCANodes.get(ZERO), activeSubtree.instructionsFromOriginalMip);
-        //here is the cal that initiates controlled branching
+        //here is the call that initiates controlled branching
+        logger.debug ("Reincarnating node 8 using CB instructions") ;  
         activeSubtreeNew.reincarnate( tree.asMap(),candidateCCANodes.get(ZERO).nodeID  , PLUS_INFINITY );
-        logger.debug ("Solving node 8 reincarnated using CB instructions") ;    
+        logger.debug ("Solving reincarnated node  ") ;  
         activeSubtreeNew.solve(PLUS_INFINITY,PLUS_INFINITY,TEN*TEN*TWO, false);
         logger.debug ("Solution for node 8 reincarnated using CB instructions" +
                  ( activeSubtreeNew.isFeasible()||activeSubtreeNew.isOptimal()? activeSubtreeNew.getObjectiveValue():-ONE) );    
+        
         exit(0);
         
-        
+        //some other tests
         candidateCCANodes = activeSubtree.getCandidateCCANodes( Arrays.asList(  "Node21", "Node22", "Node25","Node28", "Node29", "Node30"));
          for (CCANode ccaNode :candidateCCANodes ){
             logger.debug (ccaNode) ;              

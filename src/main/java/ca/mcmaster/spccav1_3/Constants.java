@@ -20,6 +20,7 @@ public class Constants {
     public static final double DOUBLE_ZERO = 0.0;
     public static final int ONE = 1;
     public static final int TWO = 2;    
+    public static final int THREE = 3; 
     public static final int FOUR = 4;    
     public static final int TEN = 10;  
     public static final int SIXTY = 60;  
@@ -38,15 +39,15 @@ public class Constants {
     public static    int NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE  =  6;     
     //remove after testing
     //List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node25", "Node23", "Node24","Node13", "Node29", "Node30");      
-    public static final List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node15", "Node21", "Node22", "Node25","Node28", "Node29", "Node30");      
+    public static final List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node15",   "Node22", "Node25","Node28", "Node29", "Node30");      
     
     
     //for testing, grow the tree this big
     public static  final int TOTAL_LEAFS_IN_SOLUTION_TREE =  18 ;
     
     //CCA subtree allowed to have slightly less good leafs than asked for in NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE 
-    public static final double CCA_TOLERANCE_FRACTION =  0.15;
-    public static final double CCA_PACKING_FACTOR_MAXIMUM_ALLOWED =  0.5;
+    public static   double CCA_TOLERANCE_FRACTION =  0.10;
+    public static  double CCA_PACKING_FACTOR_MAXIMUM_ALLOWED =  0.5;
     
     //for testing
     public static   boolean BackTrack = true;
