@@ -19,7 +19,7 @@ import org.apache.log4j.*;
  * @author tamvadss
  * 
  * rdplu empty bh 1 hr 40 min
- * rdplu my bh 
+ * rdplu my bh Total time: 1:44:21.958s
  */
 public class TestDriver_CompletionTimes {
     
@@ -45,11 +45,11 @@ public class TestDriver_CompletionTimes {
         MPS_FILE_ON_DISK =  "F:\\temporary files here\\rd-rplusc-21.mps";
         BackTrack=false;
         
-         
+        /* 
         logger.debug("Starting simple solve  " );
         ActiveSubtree activeSubtreeSimple = new ActiveSubtree () ;
         activeSubtreeSimple.simpleSolve( -ONE);
-        logger.debug("Completed simple solve  " );
+        logger.debug("Completed simple solve  " );*/
         
         logger.debug("Starting regular solve  " ); 
         ActiveSubtree activeSubtree = new ActiveSubtree () ;

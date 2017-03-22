@@ -148,7 +148,7 @@ public class ActiveSubtree {
         }  
         
         
-        setCutoff(  cutoff);
+        //setCutoff(  cutoff);
         setParams (  timeLimitMinutes);
                 
         cplex.solve();
@@ -178,7 +178,7 @@ public class ActiveSubtree {
         this.cplex.use( new ReincarnationBranchHandler(instructionTreeAsMap,  reincarnationMaps, this.modelVars));
         this.cplex.use( new ReincarnationNodeHandler(reincarnationMaps));      
         
-        setCutoff(  cutoff);
+        //setCutoff(  cutoff);
         setParams (  MILLION);//no time limit
          
         cplex.solve();
@@ -240,7 +240,7 @@ public class ActiveSubtree {
         return ccaNode.pruneList;
     }
       
-    public void setCutoff(double cutoff) throws IloException {
+    public void setCutoffValue(double cutoff) throws IloException {
         if (!IS_MAXIMIZATION) {
             cplex.setParam(    IloCplex.Param.MIP.Tolerances.UpperCutoff, cutoff);
         }else {
@@ -249,7 +249,7 @@ public class ActiveSubtree {
     }
     
     public void setParams (int timeLimitMinutes) throws IloException {
-        //cplex.setParam(IloCplex.Param.MIP.Strategy.File, ZERO); 
+        cplex.setParam(IloCplex.Param.MIP.Strategy.File, ZERO); 
         if (timeLimitMinutes>ZERO) cplex.setParam(IloCplex.Param.TimeLimit, timeLimitMinutes*SIXTY); 
         if (BackTrack) cplex.setParam( IloCplex.Param.MIP.Strategy.Backtrack,  ZERO); 
     }
