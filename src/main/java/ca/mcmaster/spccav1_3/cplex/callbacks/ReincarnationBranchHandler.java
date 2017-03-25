@@ -123,6 +123,7 @@ public class ReincarnationBranchHandler extends IloCplex.BranchCallback {
                     //create child and record child node ID
                     IloCplex.NodeId nodeid =makeBranch( vars[childNum],  bounds[childNum],dirs[childNum], getObjValue(), thisChild);
                     thisChild.nodeID =nodeid.toString();
+                    thisChild.estimatedLPRelaxationValue = getObjValue();
                     
                     logger.debug(" Node "+nodeData.nodeID + " created child "+  thisChild.nodeID + " using branches as follows ");
                     for (int numBranchingVars = ZERO; numBranchingVars< vars[childNum].length; numBranchingVars++) {
@@ -146,6 +147,7 @@ public class ReincarnationBranchHandler extends IloCplex.BranchCallback {
                     nodeData.branchingVars = vars;
                     nodeData.branchingBounds=bounds;
                     nodeData.branchingDirections =dirs;
+                    nodeData.estimatedLPRelaxationValue=  getObjValue();
                     
                     //for each kid created , update the reincarnation Maps
                     //cvn jk is boy////58655545185151512128884545  <<- comment from my daughter ! Think of it as a present ;an easter egg !

@@ -20,7 +20,8 @@ public class NodeAttachment {
     
     //default node ID  for subtree root 
     public String nodeID = EMPTY_STRING + -ONE; 
-    public int depthFromSubtreeRoot = ZERO;        
+    public int depthFromSubtreeRoot = ZERO;    
+    public double     estimatedLPRelaxationValue ;
     
     //reference to parent node
     public  NodeAttachment  parentData = null;
@@ -81,7 +82,7 @@ public class NodeAttachment {
         
         if (leftChildNodeID!=null) {
             result += "Left child is " + leftChildNodeID + " \n";
-            for (int index = ZERO ; index < this.branchingBounds.length; index ++){
+            for (int index = ZERO ; index < this.branchingBounds[ZERO].length; index ++){
                 String varname = this.branchingVars[ZERO][index].getName();
                 Double varbound = this.branchingBounds[ZERO][index];
                 String isDown = this.branchingDirections[ZERO][index].equals( IloCplex.BranchDirection.Down ) ? "U": "L";
@@ -91,7 +92,7 @@ public class NodeAttachment {
         }
         if (rightChildNodeID!=null){
             result += "Right child is " + rightChildNodeID + " \n";
-            for (int index = ZERO ; index < this.branchingBounds.length; index ++){
+            for (int index = ZERO ; index < this.branchingBounds[ONE].length; index ++){
                 String varname = this.branchingVars[ONE][index].getName();
                 Double varbound = this.branchingBounds[ONE][index];
                 String isDown = this.branchingDirections[ONE][index].equals( IloCplex.BranchDirection.Down ) ? "U": "L";

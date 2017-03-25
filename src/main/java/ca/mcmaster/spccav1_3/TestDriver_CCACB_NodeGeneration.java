@@ -46,7 +46,7 @@ public class TestDriver_CCACB_NodeGeneration {
         
         //TEST 1 - solve altanta-ip with backtrack =0 to > 18 leafs
         ActiveSubtree activeSubtree = new ActiveSubtree () ;
-        activeSubtree.solve( TOTAL_LEAFS_IN_SOLUTION_TREE, PLUS_INFINITY, MILLION, true);
+        activeSubtree.solve( TOTAL_LEAFS_IN_SOLUTION_TREE_FOR_RAMPUP, PLUS_INFINITY, MILLION, true, false);
         
         logger.debug ("TEST 2 - print CCA nodes having 6 good leafs") ;       
         //TEST 2 - print CCA nodes having 6 good leafs
@@ -123,25 +123,24 @@ public class TestDriver_CCACB_NodeGeneration {
         activeSubtreeNew.mergeVarBounds(candidateCCANodes.get(ZERO), activeSubtree.instructionsFromOriginalMip);
         //here is the call that initiates controlled branching
         logger.debug ("Reincarnating node 8 using CB instructions") ;  
-        activeSubtreeNew.reincarnate( tree.asMap(),candidateCCANodes.get(ZERO).nodeID  , PLUS_INFINITY );
+        activeSubtreeNew.reincarnate( tree.asMap(),candidateCCANodes.get(ZERO).nodeID  , PLUS_INFINITY , false);
         logger.debug ("Solving reincarnated node  ") ;  
-        activeSubtreeNew.solve(PLUS_INFINITY,PLUS_INFINITY,TEN*TEN*TWO, false);
+        activeSubtreeNew.solve(PLUS_INFINITY,PLUS_INFINITY,MILLION, false, false);
         logger.debug ("Solution for node 8 reincarnated using CB instructions" +
                  ( activeSubtreeNew.isFeasible()||activeSubtreeNew.isOptimal()? activeSubtreeNew.getObjectiveValue():-ONE) );    
         
+         
         exit(0);
         
-        //some other tests
-        candidateCCANodes = activeSubtree.getCandidateCCANodes( Arrays.asList(  "Node21", "Node22", "Node25","Node28", "Node29", "Node30"));
-         for (CCANode ccaNode :candidateCCANodes ){
+        //TEST 9 create CCA using explicit leafs
+        logger.debug ("Test 9 - CCA and CB for 2 leafs" );
+        candidateCCANodes = activeSubtree.getCandidateCCANodes( Arrays.asList(  "Node27", "Node33"));
+        for (CCANode ccaNode :candidateCCANodes ){
             logger.debug (ccaNode) ;              
         }
-         
-
-         
-        tree = activeSubtree.getCBInstructionTree(candidateCCANodes.get(ZERO),Arrays.asList(  "Node21", "Node22", "Node25","Node28", "Node29", "Node30") );
-        
+        tree = activeSubtree.getCBInstructionTree(candidateCCANodes.get(ZERO),Arrays.asList(  "Node27", "Node33") );
         tree.print();
+          
         
     } //end main
     

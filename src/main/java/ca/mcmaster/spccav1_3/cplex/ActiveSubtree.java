@@ -16,17 +16,20 @@ import ca.mcmaster.spccav1_3.cplex.datatypes.BranchingInstruction;
 import ca.mcmaster.spccav1_3.cplex.datatypes.NodeAttachment;
 import static ca.mcmaster.spccav1_3.utilities.BranchHandlerUtilities.getLowerBounds;
 import static ca.mcmaster.spccav1_3.utilities.BranchHandlerUtilities.getUpperBounds;
+import static ca.mcmaster.spccav1_3.utilities.CCAUtilities.getBranchingInstructionForCCANode;
+import static ca.mcmaster.spccav1_3.utilities.CCAUtilities.getCCANodeLPRelaxValue;
 import ca.mcmaster.spccav1_3.utilities.CplexUtilities;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
-import static ilog.cplex.IloCplex.CplexStatus.Feasible;
-import static ilog.cplex.IloCplex.CplexStatus.Optimal;
+import static ilog.cplex.IloCplex.Status.*;
 import static java.lang.System.exit;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -63,6 +66,10 @@ public class ActiveSubtree {
     //When extracting a CCA node from this Active Subtree , keep in mind that the CCA node branching instructions should be combined with these instructions
     public List<BranchingInstruction> instructionsFromOriginalMip = new ArrayList<BranchingInstruction>();
     
+    public final String guid =  UUID.randomUUID().toString();
+    public String seedCCANodeID = MINUS_ONE_STRING; // this will change if this subtree ws created by importing a CCA , it is used for logging   
+    private double lpRelaxValueAfterCCAMerge ;
+    
     static {
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
@@ -93,19 +100,41 @@ public class ActiveSubtree {
     
     }
     
+    public void end(){
+        this.cplex.end();
+    }
+    
+    public List<NodeAttachment> getAllActiveLeafs  () {
+        return Collections.unmodifiableList(allActiveLeafs);
+    }
+    
     public void mergeVarBounds (CCANode ccaNode, List<BranchingInstruction> instructionsFromOriginalMip) throws IloException {
         List<BranchingInstruction> cumulativeInstructions = new ArrayList<BranchingInstruction>();
         cumulativeInstructions.addAll(ccaNode.branchingInstructionList);
         cumulativeInstructions.addAll(instructionsFromOriginalMip);
+        
         this.instructionsFromOriginalMip =cumulativeInstructions;
-        Map< String, Double >   lowerBounds= getLowerBounds(cumulativeInstructions);
-        Map< String, Double >   upperBounds= getUpperBounds(cumulativeInstructions);
+        this.lpRelaxValueAfterCCAMerge= ccaNode.lpRelaxationValue;
+        this.seedCCANodeID = ccaNode.nodeID;
+         
+        Map< String, Double >   lowerBounds= getLowerBounds(cumulativeInstructions, ccaNode.nodeID);
+        Map< String, Double >   upperBounds= getUpperBounds(cumulativeInstructions, ccaNode.nodeID);
+                 
         CplexUtilities.merge(cplex, lowerBounds, upperBounds);
+        
     }
     
     
     public boolean isFeasible () throws IloException {
         return this.cplex.getStatus().equals(Feasible);
+    }
+    
+    public boolean isUnFeasible () throws IloException {
+        return this.cplex.getStatus().equals(Infeasible);
+    }
+        
+    public boolean isUnknown () throws IloException {
+        return this.cplex.getStatus().equals(Unknown);
     }
         
     public boolean isOptimal () throws IloException {
@@ -130,7 +159,7 @@ public class ActiveSubtree {
         logger.debug("simpleSolve completed at "+LocalDateTime.now()) ;
     }   
         
-    public void solve(long leafCountLimit, double cutoff, int timeLimitMinutes, boolean isRampUp) throws IloException{
+    public void solve(long leafCountLimit, double cutoff, int timeLimitMinutes, boolean isRampUp, boolean setCutoff) throws IloException{
         
         logger.debug(" Solve begins at "+LocalDateTime.now()) ;
         
@@ -148,7 +177,7 @@ public class ActiveSubtree {
         }  
         
         
-        //setCutoff(  cutoff);
+        if (setCutoff) setCutoffValue(  cutoff);
         setParams (  timeLimitMinutes);
                 
         cplex.solve();
@@ -168,7 +197,7 @@ public class ActiveSubtree {
  
     //this method is used when reincarnating a tree in a controlled fashion
     //similar to solve(), but we use controlled branching instead of CPLEX default branching
-    public    void reincarnate ( Map<String, CCANode> instructionTreeAsMap, String ccaRootNodeID, double cutoff) throws IloException{
+    public    void reincarnate ( Map<String, CCANode> instructionTreeAsMap, String ccaRootNodeID, double cutoff, boolean setCutoff) throws IloException{
         
         //reset CCA finder
         this.ccaFinder.close();
@@ -178,7 +207,7 @@ public class ActiveSubtree {
         this.cplex.use( new ReincarnationBranchHandler(instructionTreeAsMap,  reincarnationMaps, this.modelVars));
         this.cplex.use( new ReincarnationNodeHandler(reincarnationMaps));      
         
-        //setCutoff(  cutoff);
+        if (setCutoff) setCutoffValue(  cutoff);
         setParams (  MILLION);//no time limit
          
         cplex.solve();
@@ -210,6 +239,25 @@ public class ActiveSubtree {
                 
         //re-init the CCA finder
         if (reInitializeCCAFinder) ccaFinder .initialize(allActiveLeafs);
+    }
+    
+ 
+    //use this method to farm out selected leaf nodes, supply null argument to select all
+    public List<CCANode> getActiveLeafsAsCCANodes (List<String> wantedLeafNodeIDs) {
+        List <CCANode> ccaNodeList = new ArrayList <CCANode> ();
+        
+        for (NodeAttachment leaf : this.allActiveLeafs) {
+            if (wantedLeafNodeIDs!=null && !wantedLeafNodeIDs.contains( leaf.nodeID))continue ;
+            CCANode ccaNode = new CCANode();   
+            leaf.ccaInformation=ccaNode;
+            leaf.ccaInformation.nodeID= leaf.nodeID;
+            getBranchingInstructionForCCANode( leaf);
+                        
+            getCCANodeLPRelaxValue(leaf);
+            ccaNodeList.add( ccaNode);
+        }
+        
+        return ccaNodeList;
     }
     
     //if wanted leafs are not specified, every migratable leaf under this CCA is assumed to be wanted
@@ -254,9 +302,9 @@ public class ActiveSubtree {
         if (BackTrack) cplex.setParam( IloCplex.Param.MIP.Strategy.Backtrack,  ZERO); 
     }
     
-    /*public double getBestRemaining_LPValue(){
-        return this.branchHandler.bestReamining_LPValue;
-    }*/
+    public double getBestRemaining_LPValue(){
+        return this.allActiveLeafs==null? this.lpRelaxValueAfterCCAMerge: this.branchHandler.bestReamining_LPValue;
+    }
     
     private  ReincarnationMaps createReincarnationMaps (Map<String, CCANode> instructionTreeAsMap, String ccaRootNodeID){
         ReincarnationMaps   maps = new ReincarnationMaps ();

@@ -20,7 +20,7 @@ public class CCAUtilities {
         
         /*populate  :
         
-        
+        lp relax value
         
         numNodeLPSolvesNeeded
         mapOfNodesWithOneMissingBranch 
@@ -34,7 +34,7 @@ public class CCAUtilities {
         
         */
         
-        
+        getCCANodeLPRelaxValue(thisNode);
         
         thisNode.ccaInformation.numNodeLPSolvesNeeded=getNodeLPSolvesNeeded(  thisNode);
         getMapOFNodeWithOneMissingBranch(thisNode,  thisNode.ccaInformation.mapOfNodesWithOneMissingBranch);
@@ -44,11 +44,37 @@ public class CCAUtilities {
         thisNode.ccaInformation.maxDepthOFTree= getMaxDepthOfTree (  allLeafs) ;
         
         thisNode.ccaInformation.branchingInstructionList.clear();//reset
-        getBranchingInstructionForCCANode (  thisNode,    thisNode.ccaInformation.branchingInstructionList);
+        getBranchingInstructionForCCANode (  thisNode );
         
         thisNode.ccaInformation.pruneList.clear();//reset
         getPruneList(thisNode, thisNode.ccaInformation.pruneList);
         
+    }
+    
+    public static void getCCANodeLPRelaxValue (NodeAttachment node ) {
+        node.ccaInformation.lpRelaxationValue=  node.estimatedLPRelaxationValue;
+    }
+    
+    //climb up all the way to root
+    public static void getBranchingInstructionForCCANode (NodeAttachment node ){
+        
+        NodeAttachment thisNode = node;
+        NodeAttachment parent = node.parentData;
+        while (parent !=null){
+            
+            if (parent.rightChildRef!=null && parent.rightChildNodeID.equals( thisNode.nodeID)) {
+                //must be right child
+                 
+                node.ccaInformation.branchingInstructionList.add( parent.getBranchingInstructionForRightChild()) ;
+            } else {
+                //must be the left child
+                 
+                node.ccaInformation.branchingInstructionList.add(parent.getBranchingInstructionForLeftChild()) ;
+            }
+            
+            thisNode = parent;
+            parent = parent.parentData;
+        }
     }
         
     private static void getMapOFNodeWithOneMissingBranch(NodeAttachment node, Map<Integer, Integer > mapOfNodesWithOneMissingBranch){
@@ -95,27 +121,7 @@ public class CCAUtilities {
         return max;
     }
         
-    //climb up all the way to root
-    private static void getBranchingInstructionForCCANode (NodeAttachment node,  List<BranchingInstruction> branchingInstructions){
-        
-        NodeAttachment thisNode = node;
-        NodeAttachment parent = node.parentData;
-        while (parent !=null){
-            
-            if (parent.rightChildRef!=null && parent.rightChildNodeID.equals( thisNode.nodeID)) {
-                //must be right child
-                 
-                branchingInstructions.add( parent.getBranchingInstructionForRightChild()) ;
-            } else {
-                //must be the left child
-                 
-                branchingInstructions.add(parent.getBranchingInstructionForLeftChild()) ;
-            }
-            
-            thisNode = parent;
-            parent = parent.parentData;
-        }
-    }
+
     
     //find all leafs below this CCA node
     private static void getPruneList(NodeAttachment thisNode, List<String> pruneList) {

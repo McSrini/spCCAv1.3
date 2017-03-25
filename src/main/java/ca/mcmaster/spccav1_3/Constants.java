@@ -43,7 +43,7 @@ public class Constants {
     
     
     //for testing, grow the tree this big
-    public static  final int TOTAL_LEAFS_IN_SOLUTION_TREE =  18 ;
+    public static  final int TOTAL_LEAFS_IN_SOLUTION_TREE_FOR_RAMPUP =  18 ;
     
     //CCA subtree allowed to have slightly less good leafs than asked for in NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE 
     public static   double CCA_TOLERANCE_FRACTION =  0.10;
@@ -51,5 +51,7 @@ public class Constants {
     
     //for testing
     public static   boolean BackTrack = true;
+    
+    public static   int TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE = THREE ;
     
 }

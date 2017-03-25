@@ -116,7 +116,7 @@ public   class BranchHandlerUtilities {
          
     }
     
-    public static Map< String, Double >   getUpperBounds   (List <BranchingInstruction> cumulativeBranchingInstructions) {
+    public static Map< String, Double >   getUpperBounds   (List <BranchingInstruction> cumulativeBranchingInstructions, String nodeID) {
         Map< String, Double > upperBounds = new HashMap < String, Double > ();
         
         for (BranchingInstruction bi: cumulativeBranchingInstructions){
@@ -136,13 +136,14 @@ public   class BranchHandlerUtilities {
             }
         }
         
+        logger.debug("nodeID "+nodeID);
         for ( Map.Entry< String, Double > entry:upperBounds.entrySet() ){
             logger.debug("Upper bound "+entry.getKey() + " "+ entry.getValue());
         }
         return  upperBounds ;
     }
 
-    public static Map< String, Double >   getLowerBounds   (List <BranchingInstruction> cumulativeBranchingInstructions) {
+    public static Map< String, Double >   getLowerBounds   (List <BranchingInstruction> cumulativeBranchingInstructions, String nodeID) {
         Map< String, Double > lowerBounds = new HashMap < String, Double > ();
         
         for (BranchingInstruction bi: cumulativeBranchingInstructions){            
@@ -162,6 +163,7 @@ public   class BranchHandlerUtilities {
             }            
         }
         
+        logger.debug("nodeID "+nodeID);
         for ( Map.Entry< String, Double > entry:lowerBounds.entrySet() ){
             logger.debug("Lower bound "+entry.getKey() + " "+ entry.getValue());
         }

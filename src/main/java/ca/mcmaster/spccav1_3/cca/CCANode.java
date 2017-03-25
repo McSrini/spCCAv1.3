@@ -25,6 +25,7 @@ public class CCANode {
     private static Logger logger=Logger.getLogger(CCANode.class);
     
     public String nodeID;
+    public double     lpRelaxationValue ;
              
     public int refCountLeft  =ZERO ;
     public int refCountRight  =ZERO;

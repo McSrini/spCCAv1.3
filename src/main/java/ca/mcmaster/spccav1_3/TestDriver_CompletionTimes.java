@@ -18,7 +18,7 @@ import org.apache.log4j.*;
  *
  * @author tamvadss
  * 
- * rdplu empty bh 1 hr 40 min
+ * rdplu empty bh about 1:45:17.947s
  * rdplu my bh Total time: 1:44:21.958s
  */
 public class TestDriver_CompletionTimes {
@@ -45,19 +45,22 @@ public class TestDriver_CompletionTimes {
         MPS_FILE_ON_DISK =  "F:\\temporary files here\\rd-rplusc-21.mps";
         BackTrack=false;
         
-        /* 
+        
         logger.debug("Starting simple solve  " );
         ActiveSubtree activeSubtreeSimple = new ActiveSubtree () ;
         activeSubtreeSimple.simpleSolve( -ONE);
-        logger.debug("Completed simple solve  " );*/
+        logger.debug("Completed simple solve  " ); 
         
+        /*
         logger.debug("Starting regular solve  " ); 
         ActiveSubtree activeSubtree = new ActiveSubtree () ;
         activeSubtree.solve(PLUS_INFINITY, PLUS_INFINITY,  -ONE, false);
         logger.debug("Solution is "+activeSubtree.getObjectiveValue());
+        */
         
         exit(ZERO);
         
+        /*
         List<CCANode> candidateCCANodes =activeSubtree.getCandidateCCANodes( NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE);
         for (CCANode ccaNode :candidateCCANodes ){
             logger.debug (ccaNode) ;              
@@ -77,7 +80,7 @@ public class TestDriver_CompletionTimes {
          
         tree = activeSubtree.getCBInstructionTree(candidateCCANodes.get(ZERO),Arrays.asList(  "Node21", "Node22", "Node25","Node28", "Node29", "Node30") );
         
-        tree.print();
+        tree.print();*/
         
     } //end main
     

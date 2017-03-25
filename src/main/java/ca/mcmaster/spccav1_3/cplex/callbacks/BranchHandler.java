@@ -12,6 +12,7 @@ import ca.mcmaster.spccav1_3.cplex.datatypes.NodeAttachment;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
+import java.io.File;
 import static java.lang.System.exit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,7 +33,7 @@ public class BranchHandler extends IloCplex.BranchCallback {
     //list of nodes to be pruned
     public List<String> pruneList = new ArrayList<String>();
     
-    //public double bestReamining_LPValue = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
+    public double bestReamining_LPValue = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
     
     static {
         logger.setLevel(Level.DEBUG);
@@ -60,6 +61,12 @@ public class BranchHandler extends IloCplex.BranchCallback {
                 
             } 
             
+            if (isHaltFilePresent()) {
+                System.err.println("Halt file found. Stopping...") ;
+                logger.error("Halt file found. Stopping...") ;
+                exit(ONE);
+            }
+            
             if (  pruneList.contains(nodeData.nodeID) ) {
                 pruneList.remove( nodeData.nodeID);
                 prune();
@@ -75,6 +82,7 @@ public class BranchHandler extends IloCplex.BranchCallback {
                 nodeData.branchingVars = vars;
                 nodeData.branchingBounds=bounds;
                 nodeData.branchingDirections =dirs;
+                nodeData.estimatedLPRelaxationValue=  getObjValue();
 
                 //now allow  both kids to spawn
                 for (int childNum = ZERO ;childNum<getNbranches();  childNum++) {   
@@ -89,6 +97,7 @@ public class BranchHandler extends IloCplex.BranchCallback {
                     //record child node ID
                     IloCplex.NodeId nodeid = makeBranch(childNum,thisChild );
                     thisChild.nodeID =nodeid.toString();
+                    thisChild.estimatedLPRelaxationValue = getObjValue();
                     
                     //logger.debug(" Node "+nodeData.nodeID + " created child "+  thisChild.nodeID + " varname " +   vars[childNum][ZERO].getName() + " bound " + bounds[childNum][ZERO] +   (dirs[childNum][ZERO].equals( IloCplex.BranchDirection.Down) ? " U":" L") ) ;
                     
@@ -109,10 +118,16 @@ public class BranchHandler extends IloCplex.BranchCallback {
                 
             }//end if else
             
-            //this.bestReamining_LPValue = getBestObjValue();
+            this.bestReamining_LPValue = getBestObjValue();
             
         } // end if getNbranches()> 0
         
     }//end main
-    
+        
+    private static boolean isHaltFilePresent (){
+        File file = new File("F:\\temporary files here\\haltfile.txt");
+         
+        return file.exists();
+    }
+
 }
