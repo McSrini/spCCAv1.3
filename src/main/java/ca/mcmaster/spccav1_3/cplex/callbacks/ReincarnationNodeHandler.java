@@ -60,6 +60,11 @@ public class ReincarnationNodeHandler extends IloCplex.NodeCallback {
                 setNodeData(ZERO,nodeData);                
                 
             } 
+            
+            //WARNING NOTE - BE CAREFUL WITH getNodeId(ZERO) CALL
+            //WE SET SUBTREE ROOT NODE ID TO -1 , WHICH DOES NOT CORRESPOND TO THE NODE ID AS REPORTED BY THE API CALL
+            //THIS HOWEVER DOES NOT SEEM TO MATTER , BECAUSE THE NODE CALLBACK NEVER SELECTS THE SUBTREE ROOT ( SEEMS LIKE
+            //IT GOES DIRECTLY INTO THE BRANCH CALLBACK WHEN STARTING TO SOLVE A SUBPROBLEM
            
             //first check the default node selection
             String selectedNodeID = getNodeId(ZERO).toString(); 
