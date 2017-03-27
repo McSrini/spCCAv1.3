@@ -6,6 +6,7 @@
 package ca.mcmaster.spccav1_3.cplex.datatypes;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
+import java.io.Serializable;
 import java.util.*;
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
  *
  * @author tamvadss
  */
-public class BranchingInstruction {
+public class BranchingInstruction  implements Serializable {
         
     //variables used to create this child by branching the parent
     public List<String>  varNames = new ArrayList< String> (); 

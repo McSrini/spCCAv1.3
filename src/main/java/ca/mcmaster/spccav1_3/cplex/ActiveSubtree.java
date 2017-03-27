@@ -14,6 +14,7 @@ import ca.mcmaster.spccav1_3.cb.ReincarnationMaps;
 import ca.mcmaster.spccav1_3.cplex.callbacks.*;
 import ca.mcmaster.spccav1_3.cplex.datatypes.BranchingInstruction;
 import ca.mcmaster.spccav1_3.cplex.datatypes.NodeAttachment;
+import ca.mcmaster.spccav1_3.cplex.datatypes.SolutionVector;
 import static ca.mcmaster.spccav1_3.utilities.BranchHandlerUtilities.getLowerBounds;
 import static ca.mcmaster.spccav1_3.utilities.BranchHandlerUtilities.getUpperBounds;
 import static ca.mcmaster.spccav1_3.utilities.CCAUtilities.getBranchingInstructionForCCANode;
@@ -151,6 +152,23 @@ public class ActiveSubtree {
     
     public double getObjectiveValue() throws IloException {
         return this.cplex.getObjValue();
+    }
+    
+    public SolutionVector getSolutionVector() throws IloException {
+        
+        SolutionVector  solutionVector= new SolutionVector();
+        
+        double[] variableValues = cplex.getValues(modelVars);                 
+
+        for ( int index = ZERO; index < variableValues.length; index ++){
+
+            String varName = modelVars[index].getName();
+            double varValue = variableValues[index];
+            solutionVector.add (varName,  varValue);
+
+        }
+        
+        return solutionVector;
     }
     
     //for testing

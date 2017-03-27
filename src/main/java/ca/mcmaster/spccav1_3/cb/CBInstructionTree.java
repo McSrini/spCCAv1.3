@@ -5,10 +5,9 @@
  */
 package ca.mcmaster.spccav1_3.cb;
 
-import static ca.mcmaster.spccav1_3.Constants.LOG_FILE_EXTENSION;
-import static ca.mcmaster.spccav1_3.Constants.LOG_FOLDER;
-import ca.mcmaster.spccav1_3.cca.CCANode;
-import ca.mcmaster.spccav1_3.cplex.ActiveSubtree;
+import static ca.mcmaster.spccav1_3.Constants.*;
+import ca.mcmaster.spccav1_3.cca.CCANode; 
+import java.io.Serializable;
 import static java.lang.System.exit;
 import java.util.*;
 import org.apache.log4j.Level;
@@ -20,7 +19,7 @@ import org.apache.log4j.RollingFileAppender;
  *
  * @author tamvadss
  */
-public class CBInstructionTree {
+public class CBInstructionTree  implements Serializable  {
     
     
     private static Logger logger=Logger.getLogger(CBInstructionTree.class);

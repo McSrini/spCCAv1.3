@@ -8,6 +8,7 @@ package ca.mcmaster.spccav1_3.cca;
 import static ca.mcmaster.spccav1_3.Constants.*;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtree;
 import ca.mcmaster.spccav1_3.cplex.datatypes.*;
+import java.io.Serializable;
 import static java.lang.System.exit;
 import java.util.*;
 import org.apache.log4j.Level;
@@ -20,7 +21,7 @@ import org.apache.log4j.RollingFileAppender;
  * @author tamvadss
  * 
  */
-public class CCANode {
+public class CCANode  implements Serializable {
     
     private static Logger logger=Logger.getLogger(CCANode.class);
     
