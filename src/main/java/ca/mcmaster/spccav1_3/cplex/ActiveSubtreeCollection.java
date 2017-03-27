@@ -54,7 +54,7 @@ public class ActiveSubtreeCollection {
     public ActiveSubtreeCollection (List<CCANode> ccaNodeList, List<BranchingInstruction> instructionsFromOriginalMip, double cutoff, boolean useCutoff) throws Exception {
         for (CCANode ccaNode: ccaNodeList){
             ActiveSubtree activeSubtree  = new ActiveSubtree () ;
-            activeSubtree.mergeVarBounds(ccaNode,  instructionsFromOriginalMip);  
+            activeSubtree.mergeVarBounds(ccaNode,  instructionsFromOriginalMip, false);  
             activeSubtreeList.add(activeSubtree);      
             if (useCutoff) activeSubtree.setCutoffValue(cutoff);
         }

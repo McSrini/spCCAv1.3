@@ -89,24 +89,26 @@ public class CCAFinder {
     
     public void close () {
         //reset CCA information in every node
-        for (NodeAttachment leaf : this.allLeafs){
-            
-            //climb up from this leaf  
-            NodeAttachment thisNode= leaf ;
-            NodeAttachment parent = thisNode.parentData;
-            while (parent !=null) {
-                
-                //no need to reset parent and climb up , if already traversed
-                if (parent.ccaInformation==null) break;
-                
-                parent.rightChildRef=null;
-                parent.leftChildRef=null;
-                parent.ccaInformation=null;
-                
-                thisNode= parent;
-                parent = parent.parentData;
-                
-            }//end while
+        if (this.allLeafs!=null){
+            for (NodeAttachment leaf : this.allLeafs){
+
+                //climb up from this leaf  
+                NodeAttachment thisNode= leaf ;
+                NodeAttachment parent = thisNode.parentData;
+                while (parent !=null) {
+
+                    //no need to reset parent and climb up , if already traversed
+                    if (parent.ccaInformation==null) break;
+
+                    parent.rightChildRef=null;
+                    parent.leftChildRef=null;
+                    parent.ccaInformation=null;
+
+                    thisNode= parent;
+                    parent = parent.parentData;
+
+                }//end while
+            }
         }
         
     }

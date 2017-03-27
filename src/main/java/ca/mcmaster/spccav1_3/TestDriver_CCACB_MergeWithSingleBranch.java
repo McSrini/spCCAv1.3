@@ -21,17 +21,17 @@ import org.apache.log4j.*;
  * rdplu empty bh 1 hr 40 min
  * rdplu my bh 
  */
-public class TestDriver_CCACB_NodeGeneration {
+public class TestDriver_CCACB_MergeWithSingleBranch {
     
     private static  Logger logger = null;
     
     public static void main(String[] args) throws Exception {
             
-        logger=Logger.getLogger(TestDriver_CCACB_NodeGeneration.class);
+        logger=Logger.getLogger(TestDriver_CCACB_MergeWithSingleBranch.class);
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCACB_NodeGeneration.class.getSimpleName()+ LOG_FILE_EXTENSION);
+            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCACB_MergeWithSingleBranch.class.getSimpleName()+ LOG_FILE_EXTENSION);
             rfa.setMaxBackupIndex(TEN*TEN);
             logger.addAppender(rfa);
             logger.setAdditivity(false);
@@ -44,9 +44,28 @@ public class TestDriver_CCACB_NodeGeneration {
         //ActiveSubtree activeSubtreeSimple = new ActiveSubtree () ;
         //activeSubtreeSimple.simpleSolve();
         
+        MPS_FILE_ON_DISK =  "F:\\temporary files here\\glass4.mps";
+        BackTrack=false;
+        
         //TEST 1 - solve altanta-ip with backtrack =0 to > 18 leafs
         ActiveSubtree activeSubtree = new ActiveSubtree () ;
         activeSubtree.solve( TOTAL_LEAFS_IN_SOLUTION_TREE_FOR_RAMPUP, PLUS_INFINITY, MILLION, true, false);
+        
+        //we will solve glass4 node 8, which is known to contain the winning solution
+        List<CCANode> ccaList = activeSubtree.getActiveLeafsAsCCANodes(Arrays.asList("Node8")  );
+        ActiveSubtree activeSubtree8 = new ActiveSubtree () ;        
+        activeSubtree8.mergeVarBounds(ccaList.get(ZERO), activeSubtree.instructionsFromOriginalMip, true );
+        while (!activeSubtree8.isOptimal()){
+            activeSubtree8.solve( -ONE, -ONE,THREE, false, false);
+            if (activeSubtree8.isFeasible()||activeSubtree8.isOptimal()) {
+                logger.debug( "incumbent is "+ activeSubtree8.getObjectiveValue());
+            }else {
+                logger.debug( "still l@@king ... " );
+            }
+            // this test passed in Total time: 6:09:32.124s
+        }
+        
+        exit(0);
         
         logger.debug ("TEST 2 - print CCA nodes having 6 good leafs") ;       
         //TEST 2 - print CCA nodes having 6 good leafs

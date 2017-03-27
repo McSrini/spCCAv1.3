@@ -108,7 +108,8 @@ public class ActiveSubtree {
         return Collections.unmodifiableList(allActiveLeafs);
     }
     
-    public void mergeVarBounds (CCANode ccaNode, List<BranchingInstruction> instructionsFromOriginalMip) throws IloException {
+    //create sub problem by changing var bounds
+    public void mergeVarBounds (CCANode ccaNode, List<BranchingInstruction> instructionsFromOriginalMip, boolean useBranching) throws IloException {
         List<BranchingInstruction> cumulativeInstructions = new ArrayList<BranchingInstruction>();
         cumulativeInstructions.addAll(ccaNode.branchingInstructionList);
         cumulativeInstructions.addAll(instructionsFromOriginalMip);
@@ -117,14 +118,17 @@ public class ActiveSubtree {
         this.lpRelaxValueAfterCCAMerge= ccaNode.lpRelaxationValue;
         this.seedCCANodeID = ccaNode.nodeID;
          
-        Map< String, Double >   lowerBounds= getLowerBounds(cumulativeInstructions, ccaNode.nodeID);
-        Map< String, Double >   upperBounds= getUpperBounds(cumulativeInstructions, ccaNode.nodeID);
-                 
-        CplexUtilities.merge(cplex, lowerBounds, upperBounds);
-        
+        if (useBranching){
+            //create sub problem by doing a single branch
+            solveForMergingCCA ( cumulativeInstructions,   ccaNode.lpRelaxationValue) ; 
+        } else {
+            //merge var bounds
+            Map< String, Double >   lowerBounds= getLowerBounds(cumulativeInstructions, ccaNode.nodeID);
+            Map< String, Double >   upperBounds= getUpperBounds(cumulativeInstructions, ccaNode.nodeID);
+            CplexUtilities.merge(cplex, lowerBounds, upperBounds);
+        }
     }
-    
-    
+        
     public boolean isFeasible () throws IloException {
         return this.cplex.getStatus().equals(Feasible);
     }
@@ -158,6 +162,8 @@ public class ActiveSubtree {
         cplex.solve();
         logger.debug("simpleSolve completed at "+LocalDateTime.now()) ;
     }   
+    
+
         
     public void solve(long leafCountLimit, double cutoff, int timeLimitMinutes, boolean isRampUp, boolean setCutoff) throws IloException{
         
@@ -243,6 +249,9 @@ public class ActiveSubtree {
     
  
     //use this method to farm out selected leaf nodes, supply null argument to select all
+    //
+    //This method is used for testing purposes, to show that selecting individual leafs for 
+    //migration is a bad idea, we should always use CCA nodes for migration
     public List<CCANode> getActiveLeafsAsCCANodes (List<String> wantedLeafNodeIDs) {
         List <CCANode> ccaNodeList = new ArrayList <CCANode> ();
         
@@ -322,6 +331,16 @@ public class ActiveSubtree {
         maps.newToOld_NodeId_Map.put( MINUS_ONE_STRING,ccaRootNodeID  );
         
         return maps;
+    }
+    
+    //use the merge branch callback to create a single child 
+    public void solveForMergingCCA (List<BranchingInstruction> cumulativeInstructions, double lpRelaxValue) throws IloException {
+        
+        MergeBranchHandler mbh = new MergeBranchHandler (   cumulativeInstructions, this.  modelVars,   lpRelaxValue) ;
+        cplex.clearCallbacks();
+        
+        this.cplex.use(mbh);
+        cplex.solve();
     }
  
 }
