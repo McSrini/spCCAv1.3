@@ -181,7 +181,8 @@ public class ActiveSubtree {
         logger.debug("simpleSolve completed at "+LocalDateTime.now()) ;
     }   
     
-
+    //to do : add method to supply MIP starts , and use it while doing round robin and even otherwise
+    //we can do this by supplying start vector, or export/import of MIP starts to/from a file
         
     public void solve(long leafCountLimit, double cutoff, int timeLimitMinutes, boolean isRampUp, boolean setCutoff) throws IloException{
         
