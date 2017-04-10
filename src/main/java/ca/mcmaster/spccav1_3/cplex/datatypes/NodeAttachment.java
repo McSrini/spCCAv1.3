@@ -45,6 +45,12 @@ public class NodeAttachment {
     public CCANode ccaInformation = null;
     public  NodeAttachment leftChildRef = null, rightChildRef = null;
     
+    //if a node was controlled branched upon, then in the future, it and all its ancestors must
+    //also be controlled branched upon. Otherwise we will be in danger of solving a lot of
+    //unnessesary nodes
+    public boolean wasControlledBranchedUpon = false;
+    
+    
     //converts vars bounds dirs into java format
     public BranchingInstruction getBranchingInstructionForLeftChild(){
          

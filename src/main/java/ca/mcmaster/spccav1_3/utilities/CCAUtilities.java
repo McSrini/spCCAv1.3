@@ -49,6 +49,8 @@ public class CCAUtilities {
         thisNode.ccaInformation.pruneList.clear();//reset
         getPruneList(thisNode, thisNode.ccaInformation.pruneList);
         
+        thisNode.ccaInformation.isControlledBranchingRequired= thisNode.wasControlledBranchedUpon;
+        
     }
     
     public static void getCCANodeLPRelaxValue (NodeAttachment node ) {

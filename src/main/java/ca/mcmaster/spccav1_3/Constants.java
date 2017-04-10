@@ -39,7 +39,7 @@ public class Constants {
     public static    int NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE  =  6;     
     //remove after testing
     //List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node25", "Node23", "Node24","Node13", "Node29", "Node30");      
-    public static final List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node15",   "Node22", "Node25","Node28", "Node29", "Node30");      
+    public static final List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node34",   "Node22", "Node13","Node28", "Node29", "Node30");      
     
     
     //for testing, grow the tree this big

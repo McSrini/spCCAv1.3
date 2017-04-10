@@ -99,7 +99,7 @@ public class BranchHandler extends IloCplex.BranchCallback {
                     thisChild.nodeID =nodeid.toString();
                     thisChild.estimatedLPRelaxationValue = getObjValue();
                     
-                    //logger.debug(" Node "+nodeData.nodeID + " created child "+  thisChild.nodeID + " varname " +   vars[childNum][ZERO].getName() + " bound " + bounds[childNum][ZERO] +   (dirs[childNum][ZERO].equals( IloCplex.BranchDirection.Down) ? " U":" L") ) ;
+                    logger.debug(" Node "+nodeData.nodeID + " created child "+  thisChild.nodeID + " varname " +   vars[childNum][ZERO].getName() + " bound " + bounds[childNum][ZERO] +   (dirs[childNum][ZERO].equals( IloCplex.BranchDirection.Down) ? " U":" L") ) ;
                     
                     //for testing purposes, mark some nodes as bad choices for migration
                     if ( BAD_MIGRATION_CANDIDATES_DURING_TESTING.contains( thisChild.nodeID))       thisChild.isMigrateable= false;

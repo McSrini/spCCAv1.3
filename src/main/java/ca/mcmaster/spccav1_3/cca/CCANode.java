@@ -51,6 +51,8 @@ public class CCANode  implements Serializable {
     public String leftChildNodeID = null;
     public List<BranchingInstruction> rightChildBranchingInstructions=new ArrayList<BranchingInstruction>();
     public String rightChildNodeID = null;
+    //if the following flag is set, this CCA node should not be used as it is, must controlled branch under it.
+    public boolean isControlledBranchingRequired = false;
  
     //nodes that need to be pruned from original MIP, in case this CCA node is chosen for migration
     public List<String> pruneList=new ArrayList<String>();

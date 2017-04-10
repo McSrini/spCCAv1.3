@@ -5,8 +5,7 @@
  */
 package ca.mcmaster.spccav1_3.cplex.callbacks;
 
-import ca.mcmaster.spccav1_3.utilities.BranchHandlerUtilities;
-import static ca.mcmaster.spccav1_3.Constants.BAD_MIGRATION_CANDIDATES_DURING_TESTING;
+import ca.mcmaster.spccav1_3.utilities.BranchHandlerUtilities; 
 import static ca.mcmaster.spccav1_3.Constants.IS_MAXIMIZATION;
 import static ca.mcmaster.spccav1_3.Constants.LOG_FILE_EXTENSION;
 import static ca.mcmaster.spccav1_3.Constants.LOG_FOLDER;
@@ -99,6 +98,10 @@ public class ReincarnationBranchHandler extends IloCplex.BranchCallback {
                  
                 //we do not take CPLEX default branching, instead we use controlled branching
                 //
+                //Note that every node controlled branched upon marks itself as controlled branched upon. This is
+                //required because in the future, if such nodes are chosen as CCA nodes for migration, then we must 
+                //control branch upon them to avoid visiting too many redundant intermidiate nodes
+                nodeData.wasControlledBranchedUpon=true;
                
                 //now allow  both kids to spawn, note that every CCA node has 2 kids
                 for (int childNum = ZERO ;childNum<TWO;  childNum++) {   

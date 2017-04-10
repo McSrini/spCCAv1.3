@@ -76,7 +76,7 @@ public class CBInstructionGenerator {
         //then make a recursive call on the kids unless the kids happen to be leafs
         //Any CCA node [i.e non-leaf] must have its properties populated
         //We only create CCA nodes
-        if (tree.ccaRoot.getPackingFactor()> CCA_PACKING_FACTOR_MAXIMUM_ALLOWED  ){
+        if (tree.ccaRoot.getPackingFactor()> CCA_PACKING_FACTOR_MAXIMUM_ALLOWED  || node.wasControlledBranchedUpon){
              
             if (tree.ccaRoot.refCountLeft>ZERO){
                 
