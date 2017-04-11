@@ -14,12 +14,15 @@ import java.util.*;
  */
 public class SolutionVector implements Serializable {
     
-    List<String> variableNames = new ArrayList<String>();
-    List<Double> values = new ArrayList<Double>();
+    public List<String> variableNames = new ArrayList<String>();
+    public double[] values  ;
     
-    public void add (String name, double value) {
+    public void add (String name ) {
         variableNames.add(name);
-        values.add(value);
+        
+    }
+    public void setvalues ( double[] values ) {
+        this .   values =   values ;
     }
     
 }

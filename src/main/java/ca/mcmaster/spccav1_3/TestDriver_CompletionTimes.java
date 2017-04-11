@@ -49,7 +49,7 @@ public class TestDriver_CompletionTimes {
         logger.debug("Starting simple solve  " );
         ActiveSubtree activeSubtreeSimple = new ActiveSubtree () ;
         //activeSubtreeSimple.setCutoffValue(Long.MAX_VALUE);
-        activeSubtreeSimple.simpleSolve( -ONE);
+        activeSubtreeSimple.simpleSolve( -ONE, true);
         logger.debug("Completed simple solve  " ); 
         
         /*

@@ -154,6 +154,10 @@ public class ActiveSubtree {
         return this.cplex.getObjValue();
     }
     
+    public void setMIPStart(SolutionVector solutionVector) throws IloException {
+        cplex.addMIPStart(modelVars, solutionVector.values);
+    }
+    
     public SolutionVector getSolutionVector() throws IloException {
         
         SolutionVector  solutionVector= new SolutionVector();
@@ -162,20 +166,21 @@ public class ActiveSubtree {
 
         for ( int index = ZERO; index < variableValues.length; index ++){
 
-            String varName = modelVars[index].getName();
-            double varValue = variableValues[index];
-            solutionVector.add (varName,  varValue);
+            String varName = modelVars[index].getName();            
+            solutionVector.add (varName );
 
         }
+        solutionVector.setvalues(variableValues);
         
         return solutionVector;
     }
+     
     
     //for testing
-    public void simpleSolve(int timeLimitMinutes) throws IloException{
+    public void simpleSolve(int timeLimitMinutes, boolean useEmptyCallback) throws IloException{
         logger.debug("simpleSolve Started at "+LocalDateTime.now()) ;
         cplex.clearCallbacks();
-        this.cplex.use(new EmptyBranchHandler());  
+        if (useEmptyCallback ) this.cplex.use(new EmptyBranchHandler());  
         setParams (  timeLimitMinutes);
         cplex.solve();
         logger.debug("simpleSolve completed at "+LocalDateTime.now()) ;
