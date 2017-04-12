@@ -178,7 +178,9 @@ public class CCAFinder {
     //count can be desired count, or the size of the list of desired leafs
     private void splitToCCA( NodeAttachment thisNode, int count){
         
-        if (isSplitNeeded(thisNode,   count)) {
+        if (thisNode.isLeaf()) {
+            //not a valid CCA candidate, discard
+        } else  if (isSplitNeeded(thisNode,   count)) {
             
             if (thisNode.ccaInformation.refCountLeft>ZERO) {
                 splitToCCA(   thisNode.leftChildRef,   count);
@@ -201,7 +203,7 @@ public class CCAFinder {
     
     private boolean isSplitNeeded ( NodeAttachment thisNode, int count) {
         boolean result = false;
-       
+               
         if (thisNode.ccaInformation.refCountLeft  >= count ) result = true;
         if ( thisNode.ccaInformation.refCountRight >=count ) result = true;
         
