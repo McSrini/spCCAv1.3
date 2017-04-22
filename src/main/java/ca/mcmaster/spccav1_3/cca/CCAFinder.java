@@ -182,10 +182,10 @@ public class CCAFinder {
             //not a valid CCA candidate, discard
         } else  if (isSplitNeeded(thisNode,   count)) {
             
-            if (thisNode.ccaInformation.refCountLeft>ZERO) {
+            if (thisNode.ccaInformation.refCountLeft>=ZERO) {
                 splitToCCA(   thisNode.leftChildRef,   count);
             }
-            if (thisNode.ccaInformation.refCountRight>ZERO) {
+            if (thisNode.ccaInformation.refCountRight>=ZERO) {
                 splitToCCA(   thisNode.rightChildRef,   count);
             }
             
