@@ -14,8 +14,11 @@ import static ca.mcmaster.spccav1_3.Constants.PLUS_INFINITY;
 import static ca.mcmaster.spccav1_3.Constants.*;
 import ca.mcmaster.spccav1_3.cca.CCANode;
 import ca.mcmaster.spccav1_3.cplex.datatypes.BranchingInstruction;
+import ca.mcmaster.spccav1_3.cplex.datatypes.SolutionVector;
 import ilog.concert.IloException;
 import static java.lang.System.exit;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -36,6 +39,7 @@ public class ActiveSubtreeCollection {
     private List<ActiveSubtree> activeSubtreeList = new ArrayList<ActiveSubtree>();
     
     private double incumbentValue= IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
+    private SolutionVector incumbentSolution = null;
     
     static {
         logger.setLevel(Level.DEBUG);
@@ -52,32 +56,83 @@ public class ActiveSubtreeCollection {
     }
     
     public ActiveSubtreeCollection (List<CCANode> ccaNodeList, List<BranchingInstruction> instructionsFromOriginalMip, double cutoff, boolean useCutoff) throws Exception {
+        int count = ZERO;
         for (CCANode ccaNode: ccaNodeList){
             ActiveSubtree activeSubtree  = new ActiveSubtree () ;
-            activeSubtree.mergeVarBounds(ccaNode,  instructionsFromOriginalMip, false);  
+            activeSubtree.mergeVarBounds(ccaNode,  instructionsFromOriginalMip, true);  
             activeSubtreeList.add(activeSubtree);      
             if (useCutoff) activeSubtree.setCutoffValue(cutoff);
+            logger.debug( "Added tree to collection " + count++);
         }
         if (useCutoff) this.incumbentValue= cutoff;
     }
     
-    public void solveToCompletion() throws Exception {
+    public void setMIPStart(SolutionVector solutionVector) throws IloException {
+        for (ActiveSubtree ast: activeSubtreeList){
+            ast.setMIPStart(solutionVector);
+        }        
+    }
+    
+
+
+    
+    public double getRelativeMIPGapPercent () throws IloException {
+        //return the worst remaining MIP gap
+        double mipgap = -ONE;
+        for (ActiveSubtree ast : this.activeSubtreeList){
+           if ( ast.getRelativeMIPGapPercent() > mipgap ){
+               mipgap =  ast.getRelativeMIPGapPercent();
+           }
+        }
+        return mipgap;
+    }
+    
+    public  long getNumActiveLeafs () throws IloException {
+        long count = ZERO;
+         
+        for (ActiveSubtree ast : this.activeSubtreeList){
+            count += ast.getActiveLeafCount() ;
+        }
+        return count;
+    }
+        
+    
+    public void endAll(){
+        for (ActiveSubtree ast : this.activeSubtreeList){
+            ast.end();
+        }
+    }
+     
+    public void solveToCompletion(boolean useSimple, double timeLimitMinutes) throws Exception {
         logger.info("  solving ActiveSubtree Collection ... " );        
         
-        while (activeSubtreeList.size()>ZERO){
+        Instant startTime = Instant.now();
+        
+        while (activeSubtreeList.size()>ZERO && Duration.between( startTime, Instant.now()).toMinutes()< timeLimitMinutes){
+            
+            logger.info("time in minutes left = "+ (timeLimitMinutes -Duration.between( startTime, Instant.now()).toMinutes()));
             
             //pick tree with best lp
             ActiveSubtree tree = getTreeWithBestRemaining_LPValue();
             
             //solve it for some time
             logger.info("Solving tree seeded by cca node "+ tree.seedCCANodeID + " with " + tree.guid   );  
-            tree.solve( -ONE,  incumbentValue , TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE  , false, isCollectionFeasibleOrOptimal());
+            
+            //set best known solution, if any, as MIP start
+            if ((IS_MAXIMIZATION  && incumbentValue> tree.getObjectiveValue())  || 
+                (!IS_MAXIMIZATION && incumbentValue< tree.getObjectiveValue()) )  tree.setMIPStart(incumbentSolution);
+            if (!useSimple){
+                tree.solve( -ONE,  incumbentValue ,  TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE , false, isCollectionFeasibleOrOptimal());
+            } else {
+                tree.simpleSolve(TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE,  false,  false);
+            }
             
             //update incumbent if needed            
             if (tree.isFeasible()|| tree.isOptimal()){
                 double objVal =tree.getObjectiveValue();
                 if ((IS_MAXIMIZATION && incumbentValue< objVal)  || (!IS_MAXIMIZATION && incumbentValue> objVal) ){
                     incumbentValue = objVal;
+                    this.incumbentSolution=tree.getSolutionVector();
                     logger.info("Incumbent updated to  "+ this.incumbentValue);
                 }
             }

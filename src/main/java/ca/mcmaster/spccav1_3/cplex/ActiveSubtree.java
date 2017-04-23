@@ -45,9 +45,12 @@ public class ActiveSubtree {
     private static Logger logger=Logger.getLogger(ActiveSubtree.class);
         
     private IloCplex cplex   ;
+    private boolean isEnded = false;
+    private double lpRelaxValueAfterCCAMerge ;
+    
     //vars in the model
     private IloNumVar[]  modelVars;
-    
+        
     //this is the branch handler for the CPLEX object
     private BranchHandler branchHandler;
     private RampUpNodeHandler rampUpNodeHandler;
@@ -69,7 +72,7 @@ public class ActiveSubtree {
     
     public final String guid =  UUID.randomUUID().toString();
     public String seedCCANodeID = MINUS_ONE_STRING; // this will change if this subtree ws created by importing a CCA , it is used for logging   
-    private double lpRelaxValueAfterCCAMerge ;
+
     
     static {
         logger.setLevel(Level.DEBUG);
@@ -102,12 +105,12 @@ public class ActiveSubtree {
     }
     
     public void end(){
-        this.cplex.end();
+        if (!this.isEnded)     {
+            this.cplex.end();
+            isEnded=true;
+        }
     }
     
-    public List<NodeAttachment> getAllActiveLeafs  () {
-        return Collections.unmodifiableList(allActiveLeafs);
-    }
     
     //create sub problem by changing var bounds
     public void mergeVarBounds (CCANode ccaNode, List<BranchingInstruction> instructionsFromOriginalMip, boolean useBranching) throws IloException {
@@ -175,14 +178,38 @@ public class ActiveSubtree {
         return solutionVector;
     }
      
+    public List<NodeAttachment> getActiveLeafList() throws IloException {
+        LeafFetchingNodeHandler lfnh = new LeafFetchingNodeHandler();
+        this.cplex.use(lfnh);  
+        cplex.solve();
+        this.allActiveLeafs= lfnh.allLeafs;
+        return allActiveLeafs ==null? null: Collections.unmodifiableList(allActiveLeafs) ;
+    }
+    
+    public long getActiveLeafCount() throws IloException {
+        LeafCountingNodeHandler lcnh = new LeafCountingNodeHandler();
+        this.cplex.use(lcnh);  
+        cplex.solve();
+         
+        return lcnh.numLeafs; 
+    }
     
     //for testing
-    public void simpleSolve(int timeLimitMinutes, boolean useEmptyCallback) throws IloException{
+    public void simpleSolve(int timeLimitMinutes, boolean useEmptyCallback, boolean useInMemory) throws IloException{
         logger.debug("simpleSolve Started at "+LocalDateTime.now()) ;
         cplex.clearCallbacks();
         if (useEmptyCallback ) this.cplex.use(new EmptyBranchHandler());  
-        setParams (  timeLimitMinutes);
+        setParams (  timeLimitMinutes, useInMemory);
         cplex.solve();
+        
+        //get leafs
+        /*
+        LeafFetchingNodeHandler lfnh = new LeafFetchingNodeHandler();
+        this.cplex.use(lfnh);  
+        cplex.solve();
+        this.allActiveLeafs= lfnh.allLeafs;
+*/
+               
         logger.debug("simpleSolve completed at "+LocalDateTime.now()) ;
     }   
     
@@ -208,7 +235,7 @@ public class ActiveSubtree {
         
         
         if (setCutoff) setCutoffValue(  cutoff);
-        setParams (  timeLimitMinutes);
+        setParams (  timeLimitMinutes,isRampUp );
                 
         cplex.solve();
         
@@ -224,6 +251,21 @@ public class ActiveSubtree {
         logger.debug(" Solve concludes at "+LocalDateTime.now()) ;
         
     }
+    
+    //invoke this method only if feasible solution exists
+    public double getRelativeMIPGapPercent () throws IloException {
+        double bestInteger=cplex.getObjValue();
+        double bestBound = this.cplex.getBestObjValue();
+        
+        double relativeMIPGap =  bestBound - bestInteger ;        
+        if ( IS_MAXIMIZATION)  {
+            relativeMIPGap = relativeMIPGap /(EPSILON + Math.abs(bestInteger  ));
+        } else {
+            relativeMIPGap = relativeMIPGap /(EPSILON + Math.abs(bestBound));
+        }
+        
+        return Math.abs(relativeMIPGap)*HUNDRED ;
+    }
  
     //this method is used when reincarnating a tree in a controlled fashion
     //similar to solve(), but we use controlled branching instead of CPLEX default branching
@@ -238,7 +280,7 @@ public class ActiveSubtree {
         this.cplex.use( new ReincarnationNodeHandler(reincarnationMaps));      
         
         if (setCutoff) setCutoffValue(  cutoff);
-        setParams (  MILLION);//no time limit
+        setParams (  -ONE, true);//no time limit
          
         cplex.solve();
         
@@ -329,14 +371,15 @@ public class ActiveSubtree {
         }
     }
     
-    public void setParams (int timeLimitMinutes) throws IloException {
-        cplex.setParam(IloCplex.Param.MIP.Strategy.File, ZERO); 
+    public void setParams (int timeLimitMinutes, boolean inMemory) throws IloException {
+        if (inMemory) cplex.setParam(IloCplex.Param.MIP.Strategy.File, ZERO); 
         if (timeLimitMinutes>ZERO) cplex.setParam(IloCplex.Param.TimeLimit, timeLimitMinutes*SIXTY); 
         if (BackTrack) cplex.setParam( IloCplex.Param.MIP.Strategy.Backtrack,  ZERO); 
     }
     
-    public double getBestRemaining_LPValue(){
-        return this.allActiveLeafs==null? this.lpRelaxValueAfterCCAMerge: this.branchHandler.bestReamining_LPValue;
+    public double getBestRemaining_LPValue() throws IloException{
+        return this.cplex.getBestObjValue();
+        //return this.allActiveLeafs==null? this.lpRelaxValueAfterCCAMerge: this.branchHandler.bestReamining_LPValue;
     }
     
     private  ReincarnationMaps createReincarnationMaps (Map<String, CCANode> instructionTreeAsMap, String ccaRootNodeID){

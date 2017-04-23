@@ -64,7 +64,7 @@ public class TestDriver_RoundRobin {
         List<CCANode> ccaNodeList = activeSubtree.getActiveLeafsAsCCANodes(null);        
         
         ActiveSubtreeCollection astc = new ActiveSubtreeCollection (ccaNodeList, activeSubtree.instructionsFromOriginalMip, cutoff, useCutoff) ;
-        astc.solveToCompletion();
+        astc.solveToCompletion(false, MILLION);
          
     } //end main
     
