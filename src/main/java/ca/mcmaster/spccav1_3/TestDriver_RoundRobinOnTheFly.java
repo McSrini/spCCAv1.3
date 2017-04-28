@@ -27,17 +27,17 @@ import org.apache.log4j.*;
  * Then get CCA nodes with 500 leafs each
  * Some of them are selected, the others are controlled branched
  */
-public class TestDriver_ElsevierCCA {
+public class TestDriver_RoundRobinOnTheFly {
     
     private static  Logger logger = null;
     
     public static void main(String[] args) throws Exception {
             
-        logger=Logger.getLogger(TestDriver_ElsevierCCA.class);
+        logger=Logger.getLogger(TestDriver_RoundRobinOnTheFly.class);
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_ElsevierCCA.class.getSimpleName()+ LOG_FILE_EXTENSION);
+            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_RoundRobinOnTheFly.class.getSimpleName()+ LOG_FILE_EXTENSION);
             rfa.setMaxBackupIndex(TEN*TEN);
             logger.addAppender(rfa);
             logger.setAdditivity(false);
@@ -49,15 +49,15 @@ public class TestDriver_ElsevierCCA {
         
          
         //TEST 1 - solve b2c1s1 with backtrack =false to ten-thousand leafs
-        MPS_FILE_ON_DISK =  "F:\\temporary files here\\msc98-ip.mps";
+        MPS_FILE_ON_DISK =  "F:\\temporary files here\\atlanta-ip.mps";
         BackTrack=false;
         BAD_MIGRATION_CANDIDATES_DURING_TESTING = new ArrayList<String>();
         ActiveSubtree activeSubtree = new ActiveSubtree () ;
-        activeSubtree.solve( 1500, PLUS_INFINITY, MILLION, true, false);
+        activeSubtree.solve( 600, PLUS_INFINITY, MILLION, true, false); //500 50 atalanta-ip
         
         logger.debug ("TEST 2 - print CCA nodes having approx 250 good leafs") ;       
         //TEST 2 - print CCA nodes having approx 250 good leafs
-        List<CCANode> candidateCCANodes =activeSubtree.getCandidateCCANodes(   150 ); ///2000  150
+        List<CCANode> candidateCCANodes =activeSubtree.getCandidateCCANodes(   80 ); ///2000  150
         for (CCANode ccaNode :candidateCCANodes ){
             logger.debug (ccaNode) ;              
         }
@@ -78,6 +78,9 @@ public class TestDriver_ElsevierCCA {
         SolutionVector bestKnownSolution = null;
         if (activeSubtree.isFeasible()) {
             bestKnownSolution =             activeSubtree.getSolutionVector();
+            logger.debug("best known solution after ramp up is "+ activeSubtree.getObjectiveValue()) ;
+        } else {
+            logger.debug("NO known solution after ramp up   " ) ;
         }
         
         
@@ -92,9 +95,9 @@ public class TestDriver_ElsevierCCA {
             if (bestKnownSolution!=null) treeStraight.setMIPStart(bestKnownSolution);
             treeStraight.simpleSolve(-ONE, false, false);
             double straightSolveTimeTakenInMinutes = Duration.between( startTime, Instant.now()).toMinutes();
-            treeStraight.end();
             logger.debug (""+ccaNode.nodeID + " straight solve ended for node in minutes " +  straightSolveTimeTakenInMinutes);
-            
+            if (treeStraight.isFeasible()|| treeStraight.isOptimal()) logger.debug (" cca node straight solve solution is "+treeStraight.getObjectiveValue());
+            treeStraight.end();
             if(isHaltFilePresent())  exit(ONE);
              
              
@@ -104,12 +107,13 @@ public class TestDriver_ElsevierCCA {
             ActiveSubtreeCollection astc = new ActiveSubtreeCollection (ccaNodeList, activeSubtree.instructionsFromOriginalMip, -ONE, false) ;
             if (bestKnownSolution!=null) astc.setMIPStart(  bestKnownSolution);
             logger.debug("Started active subtree collection solve for leafs under " +ccaNode.nodeID );
-            logger.debug("Starting Mip gap  is " + astc.getRelativeMIPGapPercent());
+            logger.debug("Starting Mip gap percentage is " + astc.getRelativeMIPGapPercent());
             astc.solveToCompletion(true,  TEN*straightSolveTimeTakenInMinutes );
             logger.debug("Ended active subtree collection solve for leafs under " +ccaNode.nodeID );
-            logger.debug("Mip gap reamining is " + astc.getRelativeMIPGapPercent());
+            logger.debug("Mip gap reamining percentage is " + astc.getRelativeMIPGapPercent());
             //logger.debug("Count of nodes reamining is " + astc.getNumActiveLeafs());
-            logger.debug("Count of trees reamining is " + astc.getNumTrees());
+            logger.debug("Count of trees reamining is " + astc.getNumTrees() + " and raw nodes reamining is "+ astc.getPendingRawNodeCount());
+            if(astc.isCollectionFeasibleOrOptimal()) logger.debug("Collection best known soln is  "+astc.getIncumbentValue());
             astc.endAll();
              
             if(isHaltFilePresent())  exit(ONE);

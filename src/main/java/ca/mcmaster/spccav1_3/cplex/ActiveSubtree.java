@@ -257,8 +257,8 @@ public class ActiveSubtree {
         double bestInteger=cplex.getObjValue();
         double bestBound = this.cplex.getBestObjValue();
         
-        double relativeMIPGap =  bestBound - bestInteger ;        
-        if ( IS_MAXIMIZATION)  {
+       double relativeMIPGap =  bestBound - bestInteger ;        
+        if (! IS_MAXIMIZATION)  {
             relativeMIPGap = relativeMIPGap /(EPSILON + Math.abs(bestInteger  ));
         } else {
             relativeMIPGap = relativeMIPGap /(EPSILON + Math.abs(bestBound));
