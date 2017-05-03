@@ -6,6 +6,7 @@
 package ca.mcmaster.spccav1_3.cplex;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
+import static ca.mcmaster.spccav1_3.TestDriver_CCATraditional_SimulatedCluster.MIP_WELLKNOWN_SOLUTION;
 import ca.mcmaster.spccav1_3.cb.CBInstructionGenerator;
 import ca.mcmaster.spccav1_3.cca.CCAFinder;
 import ca.mcmaster.spccav1_3.cca.CCANode;
@@ -73,9 +74,12 @@ public class ActiveSubtree {
     public final String guid =  UUID.randomUUID().toString();
     public String seedCCANodeID = MINUS_ONE_STRING; // this will change if this subtree ws created by importing a CCA , it is used for logging   
 
+    //temporarily, I am introducing these two variables which are used for statistics
+    public long numActiveLeafsAfterSimpleSolve=ZERO ;
+    public long numActiveLeafsWithGoodLPAfterSimpleSolve=ZERO ;
     
     static {
-        logger.setLevel(Level.DEBUG);
+        logger.setLevel(Level.OFF);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
             logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+ActiveSubtree.class.getSimpleName()+ LOG_FILE_EXTENSION));
@@ -163,6 +167,8 @@ public class ActiveSubtree {
     
     public SolutionVector getSolutionVector() throws IloException {
         
+/*80     */   
+
         SolutionVector  solutionVector= new SolutionVector();
         
         double[] variableValues = cplex.getValues(modelVars);                 
@@ -177,39 +183,54 @@ public class ActiveSubtree {
         
         return solutionVector;
     }
-     
-    public List<NodeAttachment> getActiveLeafList() throws IloException {
-        LeafFetchingNodeHandler lfnh = new LeafFetchingNodeHandler();
-        this.cplex.use(lfnh);  
-        cplex.solve();
-        this.allActiveLeafs= lfnh.allLeafs;
-        return allActiveLeafs ==null? null: Collections.unmodifiableList(allActiveLeafs) ;
+    
+    //a temporary measure for checking ramp ups identical
+    public List<String> getNodeCreationInfoList (){
+        return this.branchHandler.nodeCreationInfoList;
+    }
+    public int getMaxBranchingVars () {
+        return this.branchHandler.maxBranchingVars;
     }
     
+    public List<NodeAttachment> getActiveLeafList() throws IloException {
+        return allActiveLeafs ==null? null: Collections.unmodifiableList(allActiveLeafs) ;
+    }
+    //return # of leafs with superior lp, better than threshold
+    public long getActiveLeafCountLP(double treshold) throws IloException {
+        long count =  ZERO;
+        if(allActiveLeafs !=null){
+            for(NodeAttachment node: allActiveLeafs){
+                if(IS_MAXIMIZATION){
+                    if (node.estimatedLPRelaxationValue>=treshold ) count++;
+                }else{
+                    if (node.estimatedLPRelaxationValue<=treshold ) count++;
+                }
+            }
+        }
+        return count;
+    }    
     public long getActiveLeafCount() throws IloException {
-        LeafCountingNodeHandler lcnh = new LeafCountingNodeHandler();
-        this.cplex.use(lcnh);  
-        cplex.solve();
          
-        return lcnh.numLeafs; 
+        return allActiveLeafs ==null? ZERO: allActiveLeafs.size();
     }
     
     //for testing
-    public void simpleSolve(int timeLimitMinutes, boolean useEmptyCallback, boolean useInMemory) throws IloException{
+    public void simpleSolve(int timeLimitMinutes, boolean useEmptyCallback, boolean useInMemory, List<String> pruneList) throws IloException{
         logger.debug("simpleSolve Started at "+LocalDateTime.now()) ;
         cplex.clearCallbacks();
-        if (useEmptyCallback ) this.cplex.use(new EmptyBranchHandler());  
+        if (useEmptyCallback) this.cplex.use(new PruneBranchHandler( pruneList));  
         setParams (  timeLimitMinutes, useInMemory);
         cplex.solve();
         
-        //get leafs
-        /*
-        LeafFetchingNodeHandler lfnh = new LeafFetchingNodeHandler();
-        this.cplex.use(lfnh);  
+        //get leafs  
+        LeafCountingNodeHandler lcnh = new LeafCountingNodeHandler(MIP_WELLKNOWN_SOLUTION);
+        this.cplex.use(lcnh);  
         cplex.solve();
-        this.allActiveLeafs= lfnh.allLeafs;
-*/
-               
+        //this.allActiveLeafs= lcnh.allLeafs;
+        
+        numActiveLeafsAfterSimpleSolve =lcnh.numLeafs;
+        numActiveLeafsWithGoodLPAfterSimpleSolve =lcnh.numLeafsWithGoodLP;
+                        
         logger.debug("simpleSolve completed at "+LocalDateTime.now()) ;
     }   
     
@@ -253,8 +274,8 @@ public class ActiveSubtree {
     }
     
     //invoke this method only if feasible solution exists
-    public double getRelativeMIPGapPercent () throws IloException {
-        double bestInteger=cplex.getObjValue();
+    public double getRelativeMIPGapPercent (boolean useGlobalIncombentValue, double globalIncombentValue) throws IloException {
+        double bestInteger=useGlobalIncombentValue? globalIncombentValue : cplex.getObjValue();
         double bestBound = this.cplex.getBestObjValue();
         
        double relativeMIPGap =  bestBound - bestInteger ;        
@@ -362,6 +383,7 @@ public class ActiveSubtree {
     public List<String> getPruneList ( CCANode ccaNode) {
         return ccaNode.pruneList;
     }
+    
       
     public void setCutoffValue(double cutoff) throws IloException {
         if (!IS_MAXIMIZATION) {

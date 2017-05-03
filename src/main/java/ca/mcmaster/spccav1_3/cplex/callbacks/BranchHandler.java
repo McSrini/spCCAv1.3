@@ -35,6 +35,11 @@ public class BranchHandler extends IloCplex.BranchCallback {
     
     public double bestReamining_LPValue = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
     
+    //a temporary measure used for  ensuring identical ramp ups
+    //every time a node is created, record its node id, its parent node id, branching var , dir and value
+    public List<String> nodeCreationInfoList = new ArrayList<String>();
+    public int maxBranchingVars = ZERO;
+    
     static {
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
@@ -104,6 +109,12 @@ public class BranchHandler extends IloCplex.BranchCallback {
                     //for testing purposes, mark some nodes as bad choices for migration
                     if ( BAD_MIGRATION_CANDIDATES_DURING_TESTING.contains( thisChild.nodeID))       thisChild.isMigrateable= false;
                          
+                    //for ramp-up testing, temporary measure
+                    maxBranchingVars= Math.max(vars[childNum].length ,maxBranchingVars) ; //should always be 1
+                    this.nodeCreationInfoList.add( nodeid.toString() +DELIMITER+nodeData.nodeID +DELIMITER+
+                            vars[childNum][ZERO].getName()+DELIMITER+
+                            bounds[childNum][ZERO] + DELIMITER+
+                            (dirs[childNum][ZERO].equals( IloCplex.BranchDirection.Down) ? " U":" L") );
                                         
                     if (childNum == ZERO) {
                         //update left child info

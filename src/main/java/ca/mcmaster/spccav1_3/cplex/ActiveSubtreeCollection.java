@@ -16,6 +16,7 @@ import ca.mcmaster.spccav1_3.cca.CCANode;
 import ca.mcmaster.spccav1_3.cplex.datatypes.BranchingInstruction;
 import ca.mcmaster.spccav1_3.cplex.datatypes.SolutionVector;
 import ilog.concert.IloException;
+import ilog.cplex.IloCplex.Status;
 import java.io.File;
 import static java.lang.System.exit;
 import java.time.Duration;
@@ -47,6 +48,9 @@ public class ActiveSubtreeCollection {
     private double incumbentValue= IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
     private SolutionVector incumbentSolution = null;
     
+    //astc id
+    private int ID;
+    
     static {
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
@@ -61,12 +65,18 @@ public class ActiveSubtreeCollection {
           
     }
     
-    public ActiveSubtreeCollection (List<CCANode> ccaNodeList, List<BranchingInstruction> instructionsFromOriginalMip, double cutoff, boolean useCutoff) throws Exception {
+    public ActiveSubtreeCollection (List<CCANode> ccaNodeList, List<BranchingInstruction> instructionsFromOriginalMip, double cutoff, boolean useCutoff, int id) throws Exception {
         rawNodeList=ccaNodeList;
         this.instructionsFromOriginalMIP = instructionsFromOriginalMip;
         if (useCutoff) this.incumbentValue= cutoff;
         //create 1 tree
-        this.promoteCCANodeIntoActiveSubtree( this.getRawNodeWithBestLPRelaxation());
+        this.promoteCCANodeIntoActiveSubtree( this.getRawNodeWithBestLPRelaxation(), false);
+        
+        ID=id;
+    }
+    
+    public void setCutoff (double cutoff) {
+        this.incumbentValue= cutoff;
     }
     
     public void setMIPStart(SolutionVector solutionVector) throws IloException {
@@ -77,23 +87,43 @@ public class ActiveSubtreeCollection {
     
 
 
-    
-    public double getRelativeMIPGapPercent () throws IloException {
-        //return the worst remaining MIP gap
-        double mipgap = -ZERO;
-        for (ActiveSubtree ast : this.activeSubTreeList){
-           if (ast.isFeasible() && ast.getRelativeMIPGapPercent() > mipgap ){
-               mipgap =  ast.getRelativeMIPGapPercent();
-           }
+    //calculate MIP gap using global incumbent, which will be updated as this collection' s incumbent, and the best LP relax value
+    //invoke this method only if computation has an incumbent
+    public double getRelativeMIPGapPercent ()  {
+        double result = -ONE;
+        
+        try {
+            double bestInteger=this.incumbentValue;
+            double bestBound = this.getBestReaminingLPRElaxValue() ;
+
+            double relativeMIPGap =  bestBound - bestInteger ;        
+            if (! IS_MAXIMIZATION)  {
+                relativeMIPGap = relativeMIPGap /(EPSILON + Math.abs(bestInteger  ));
+            } else {
+                relativeMIPGap = relativeMIPGap /(EPSILON + Math.abs(bestBound));
+            }
+
+            result = Math.abs(relativeMIPGap)*HUNDRED;
+        }catch (Exception ex){
+            logger.error("Error calculating mipgap "+ ex.getMessage() );
         }
-        return mipgap;
+        
+        return  result;
     }
     
     public  long getNumActiveLeafs () throws IloException {
         long count = ZERO;
          
         for (ActiveSubtree ast : this.activeSubTreeList){
-            count += ast.getActiveLeafCount() ;
+            count += ast.numActiveLeafsAfterSimpleSolve;
+        }
+        return count;
+    }
+    public  long getNumActiveLeafsWithGoodLP () throws IloException {
+        long count = ZERO;
+         
+        for (ActiveSubtree ast : this.activeSubTreeList){
+            count += ast.numActiveLeafsWithGoodLPAfterSimpleSolve;
         }
         return count;
     }
@@ -106,8 +136,8 @@ public class ActiveSubtreeCollection {
         }
     }
      
-    public void solveToCompletion(boolean useSimple, double timeLimitMinutes) throws Exception {
-        logger.info("  solving ActiveSubtree Collection ... " ); 
+    public void solve (boolean useSimple, double timeLimitMinutes, boolean   useEmptyCallback, int timeSlicePerTreeInMInutes ) throws Exception {
+        logger.info(" \n solving ActiveSubtree Collection ... " + ID); 
         Instant startTime = Instant.now();
         
         while (activeSubTreeList.size()+ this.rawNodeList.size()>ZERO && Duration.between( startTime, Instant.now()).toMinutes()< timeLimitMinutes){
@@ -124,35 +154,39 @@ public class ActiveSubtreeCollection {
                 if ((IS_MAXIMIZATION  && rawNode.lpRelaxationValue> tree.getBestRemaining_LPValue() )  || 
                     (!IS_MAXIMIZATION && rawNode.lpRelaxationValue< tree.getBestRemaining_LPValue() ) ){
                     //promotion needed
-                    tree = promoteCCANodeIntoActiveSubtree(rawNode);
+                    tree = promoteCCANodeIntoActiveSubtree(rawNode, false);
                 } 
             }else if (tree ==null){
                 //promotion needed
-                tree = promoteCCANodeIntoActiveSubtree(rawNode);
+                tree = promoteCCANodeIntoActiveSubtree(rawNode, false);
             }else if (null==rawNode){
                 //just solve the best tree available
             }
 
             
-            //solve it for some time
-            logger.info("Solving tree seeded by cca node "+ tree.seedCCANodeID + " with " + tree.guid   );  
+            
             
             //set best known solution, if any, as MIP start
             if (incumbentValue != MINUS_INFINITY  && incumbentValue != PLUS_INFINITY){
                 if (tree.isFeasible()){
                     if (  (IS_MAXIMIZATION  && incumbentValue> tree.getObjectiveValue())  || (!IS_MAXIMIZATION && incumbentValue< tree.getObjectiveValue()) ) {                
-                        tree.setMIPStart(incumbentSolution);
+                        //tree.setMIPStart(incumbentSolution);
+                        tree.setCutoffValue( incumbentValue);
                     }
                 } else{
-                    tree.setMIPStart(incumbentSolution);
+                    //tree.setMIPStart(incumbentSolution);
+                    tree.setCutoffValue( incumbentValue);
                 }
             }
 
 
-            if (!useSimple){
-                tree.solve( -ONE,  incumbentValue ,  TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE , false, isCollectionFeasibleOrOptimal());
+            if (useSimple){
+                int timeSlice = (int)Math.min( timeSlicePerTreeInMInutes, Duration.between( startTime, Instant.now()).toMinutes() );
+                if (timeSlice < ONE) timeSlice =ONE;
+                logger.info("Solving tree seeded by cca node "+ tree.seedCCANodeID + " with " + tree.guid  + " for minutes " +  timeSlice);  
+                tree.simpleSolve(timeSlice,  useEmptyCallback,  false, null);                
             } else {
-                tree.simpleSolve(TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE,  false,  false);
+                //tree.solve( -ONE,  incumbentValue ,  timeSlicePerTree , false, isCollectionFeasibleOrOptimal());
             }
             
             //update incumbent if needed            
@@ -177,27 +211,20 @@ public class ActiveSubtreeCollection {
             
         }
         
-        logger.info(" ActiveSubtree Collection solved to completion" );
+        logger.info(" ActiveSubtree Collection solved to completion "+ID );
     }
         
     public double getIncumbentValue (){
         return new Double (this.incumbentValue);
     }
     
-    public boolean isCollectionFeasibleOrOptimal() throws IloException{
-        boolean status =false;
-        for (ActiveSubtree tree: activeSubTreeList){
-            if (tree.isFeasible()|| tree.isOptimal()) {
-                status=true;
-                break;
-            }
-        }
-        return status;
-    }
+    
     
     public long getPendingRawNodeCount (){
         return this.rawNodeList.size();
     }
+    
+     
     
     public int getNumTrees() {
         return  activeSubTreeList.size();
@@ -209,6 +236,22 @@ public class ActiveSubtreeCollection {
                            activeSubtree.getStatus() +", " +activeSubtree.getBestRemaining_LPValue() );
         }
         logger.debug("Number of pending raw nodes " + getPendingRawNodeCount());
+    }
+    
+    private double getBestReaminingLPRElaxValue () throws Exception{
+        double   bestReamining_LPValue = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
+        
+        if (getTreeWithBestRemaining_LPValue()!=null) bestReamining_LPValue =getTreeWithBestRemaining_LPValue().getBestRemaining_LPValue();
+        
+        if(getRawNodeWithBestLPRelaxation()!=null){
+            if (IS_MAXIMIZATION){
+                bestReamining_LPValue = Math.max(bestReamining_LPValue, getRawNodeWithBestLPRelaxation().lpRelaxationValue) ;
+            }else {
+                bestReamining_LPValue = Math.min(bestReamining_LPValue, getRawNodeWithBestLPRelaxation().lpRelaxationValue) ;
+            }
+        }
+        
+        return     bestReamining_LPValue;
     }
     
     private ActiveSubtree getTreeWithBestRemaining_LPValue() throws Exception{
@@ -255,9 +298,9 @@ public class ActiveSubtreeCollection {
     }
     
     //remove cca node from raw node list and promote it into an active subtree.
-    private ActiveSubtree promoteCCANodeIntoActiveSubtree (CCANode ccaNode) throws Exception{
+    private ActiveSubtree promoteCCANodeIntoActiveSubtree (CCANode ccaNode, boolean useBranch) throws Exception{
         ActiveSubtree activeSubtree  = new ActiveSubtree () ;
-        activeSubtree.mergeVarBounds(ccaNode,  this.instructionsFromOriginalMIP, true);  
+        activeSubtree.mergeVarBounds(ccaNode,  this.instructionsFromOriginalMIP, useBranch);  
         activeSubTreeList.add(activeSubtree);      
         this.rawNodeList.remove( ccaNode);
         logger.debug ("promoted raw node "+ ccaNode.nodeID +" into tree"+ activeSubtree.guid) ;

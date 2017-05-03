@@ -27,7 +27,7 @@ public class CplexUtilities {
     private static Logger logger=Logger.getLogger(CplexUtilities.class);
     
     static {
-        logger.setLevel(Level.DEBUG);
+        logger.setLevel(Level.OFF);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
             logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+CplexUtilities.class.getSimpleName()+ LOG_FILE_EXTENSION));

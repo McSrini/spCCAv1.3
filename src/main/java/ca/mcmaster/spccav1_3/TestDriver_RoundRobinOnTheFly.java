@@ -93,7 +93,7 @@ public class TestDriver_RoundRobinOnTheFly {
             ActiveSubtree treeStraight = new ActiveSubtree() ;
             treeStraight.mergeVarBounds(ccaNode, activeSubtree.instructionsFromOriginalMip, true );
             if (bestKnownSolution!=null) treeStraight.setMIPStart(bestKnownSolution);
-            treeStraight.simpleSolve(-ONE, false, false);
+            treeStraight.simpleSolve(-ONE, false, false, null);
             double straightSolveTimeTakenInMinutes = Duration.between( startTime, Instant.now()).toMinutes();
             logger.debug (""+ccaNode.nodeID + " straight solve ended for node in minutes " +  straightSolveTimeTakenInMinutes);
             if (treeStraight.isFeasible()|| treeStraight.isOptimal()) logger.debug (" cca node straight solve solution is "+treeStraight.getObjectiveValue());
@@ -104,16 +104,16 @@ public class TestDriver_RoundRobinOnTheFly {
             //now solve included leafs in round robin fashion for the same time
             //note ending # of leafs left and MIP gap
             List<CCANode> ccaNodeList = activeSubtree.getActiveLeafsAsCCANodes( ccaNode.pruneList);        
-            ActiveSubtreeCollection astc = new ActiveSubtreeCollection (ccaNodeList, activeSubtree.instructionsFromOriginalMip, -ONE, false) ;
+            ActiveSubtreeCollection astc = new ActiveSubtreeCollection (ccaNodeList, activeSubtree.instructionsFromOriginalMip, -ONE, false, 0) ;
             if (bestKnownSolution!=null) astc.setMIPStart(  bestKnownSolution);
             logger.debug("Started active subtree collection solve for leafs under " +ccaNode.nodeID );
             logger.debug("Starting Mip gap percentage is " + astc.getRelativeMIPGapPercent());
-            astc.solveToCompletion(true,  TEN*straightSolveTimeTakenInMinutes );
+            astc.solve (true,  TEN*straightSolveTimeTakenInMinutes , false, TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE);
             logger.debug("Ended active subtree collection solve for leafs under " +ccaNode.nodeID );
             logger.debug("Mip gap reamining percentage is " + astc.getRelativeMIPGapPercent());
             //logger.debug("Count of nodes reamining is " + astc.getNumActiveLeafs());
             logger.debug("Count of trees reamining is " + astc.getNumTrees() + " and raw nodes reamining is "+ astc.getPendingRawNodeCount());
-            if(astc.isCollectionFeasibleOrOptimal()) logger.debug("Collection best known soln is  "+astc.getIncumbentValue());
+            /*if(astc.isCollectionFeasibleOrOptimal())*/ logger.debug("Collection best known soln is  "+astc.getIncumbentValue());
             astc.endAll();
              
             if(isHaltFilePresent())  exit(ONE);

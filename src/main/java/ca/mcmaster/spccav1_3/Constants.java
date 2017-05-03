@@ -5,6 +5,7 @@
  */
 package ca.mcmaster.spccav1_3;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class Constants {
     public static final long PLUS_INFINITY = Long.MAX_VALUE;
     public static final long MINUS_INFINITY = Long.MIN_VALUE;
     public static final double EPSILON = 0.0000000001;
+    public static final String DELIMITER = "______";
     
     //public static  String MPS_FILE_ON_DISK =  "F:\\temporary files here\\rd-rplusc-21.mps";
     public static  String MPS_FILE_ON_DISK =  "F:\\temporary files here\\atlanta-ip.mps";
@@ -43,14 +45,14 @@ public class Constants {
     public static    int NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE  =  6;     
     //remove after testing
     //List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node25", "Node23", "Node24","Node13", "Node29", "Node30");      
-    public static  List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node34",   "Node22", "Node13","Node28", "Node29", "Node30");      
+    public static  List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING = new ArrayList<String>(); // Arrays.asList("Node34",   "Node22", "Node13","Node28", "Node29", "Node30");      
     
     
     //for testing, grow the tree this big
     public static  final int TOTAL_LEAFS_IN_SOLUTION_TREE_FOR_RAMPUP =  18 ;
     
     //CCA subtree allowed to have slightly less good leafs than asked for in NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE 
-    public static   double CCA_TOLERANCE_FRACTION =  0.10;
+    public static   double CCA_TOLERANCE_FRACTION =  0.30;
     public static  double CCA_PACKING_FACTOR_MAXIMUM_ALLOWED =  0.5;
     
     //for testing
