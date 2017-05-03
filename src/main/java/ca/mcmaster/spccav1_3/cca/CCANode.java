@@ -27,6 +27,9 @@ public class CCANode  implements Serializable {
     
     public String nodeID;
     public double     lpRelaxationValue ;
+    //for leaf nodes that are converted into CCA nodes for round-robin, we have 2 more properties which help with round-robin
+    public double     bestEstimateValue ;
+    public double     sumOfIntegerInfeasibilities ;
              
     public int refCountLeft  =ZERO ;
     public int refCountRight  =ZERO;

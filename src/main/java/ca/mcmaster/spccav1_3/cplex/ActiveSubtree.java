@@ -350,6 +350,14 @@ public class ActiveSubtree {
             getBranchingInstructionForCCANode( leaf);
                         
             getCCANodeLPRelaxValue(leaf);
+            
+            //populate CCA node with best-estimate and sum-of-infeasibilities
+            //this is not done non-leaf regular CCA nodes
+            ccaNode.sumOfIntegerInfeasibilities = leaf.sumOfIntegerInfeasibilities;
+            ccaNode.bestEstimateValue= leaf.bestEstimateValue;
+            logger.debug(" cca node properties for round robin LP BE SI "+ ccaNode.lpRelaxationValue + ", "+ 
+                         ccaNode.bestEstimateValue + ", "+ccaNode.sumOfIntegerInfeasibilities );
+            
             ccaNodeList.add( ccaNode);
         }
         

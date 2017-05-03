@@ -48,7 +48,14 @@ public class LeafFetchingNodeHandler extends IloCplex.NodeCallback {
             for (int index = ZERO ; index < numLeafs; index ++){
                 
                 //null check takes care of the corner case when, even after few minutes of solving, the root node of a subtree still has not branched
-                if (null!=getNodeData(index)) allLeafs.add((NodeAttachment)getNodeData(index) );
+                if (null!=getNodeData(index)){
+                    NodeAttachment attachMent = (NodeAttachment)getNodeData(index);
+                    attachMent.sumOfIntegerInfeasibilities = getInfeasibilitySum(index);
+                    attachMent.bestEstimateValue = getEstimatedObjValue(index);
+                    allLeafs.add( attachMent);
+                }
+                
+                
                  
             }
               

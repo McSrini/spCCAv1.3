@@ -22,6 +22,11 @@ public class NodeAttachment {
     public String nodeID = EMPTY_STRING + -ONE; 
     public int depthFromSubtreeRoot = ZERO;    
     public double     estimatedLPRelaxationValue ;
+    //in addition to LP relax value, we also save some other metrics. There are only populated when the 
+    //leafs are enumerated, and used when individual leafs are .round-robinned. These are not 
+    //populated every time a child node is created.
+    public double     bestEstimateValue ;
+    public double sumOfIntegerInfeasibilities;
     
     //reference to parent node
     public  NodeAttachment  parentData = null;
