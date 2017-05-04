@@ -51,6 +51,9 @@ public class ActiveSubtreeCollection {
     //astc id
     private int ID;
     
+    //keep track of max trees created in this collection during solution
+    public    int maxTreesCreatedDuringSolution = ONE;
+    
     static {
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
@@ -140,11 +143,12 @@ public class ActiveSubtreeCollection {
         logger.info(" \n solving ActiveSubtree Collection ... " + ID); 
         Instant startTime = Instant.now();
         
+        
         while (activeSubTreeList.size()+ this.rawNodeList.size()>ZERO && Duration.between( startTime, Instant.now()).toMinutes()< timeLimitMinutes){
             
             logger.info("time in minutes left = "+ (timeLimitMinutes -Duration.between( startTime, Instant.now()).toMinutes()));
             if(isHaltFilePresent())  exit(ONE);
-            
+                        
             //pick tree with best lp
             ActiveSubtree tree = getTreeWithBestRemaining_LPValue();
             //pick raw node with best LP
@@ -163,7 +167,8 @@ public class ActiveSubtreeCollection {
                 //just solve the best tree available
             }
 
-            
+            //keep track of max trees created on this partition during solution
+            maxTreesCreatedDuringSolution = Math.max(maxTreesCreatedDuringSolution ,  activeSubTreeList.size());
             
             
             //set best known solution, if any, as MIP start

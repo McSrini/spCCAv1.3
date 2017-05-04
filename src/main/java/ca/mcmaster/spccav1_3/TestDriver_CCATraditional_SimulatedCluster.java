@@ -25,12 +25,8 @@ import org.apache.log4j.*;
  * @author tamvadss
  * 
  *  glass4   , 50000:5000   0.3  - TEST 1 confirmed - took 7 hours
- * 
- * glass4   , 50000:2000 4000 0.1
- * 
- * test 1 -  atlanta-ip 2000: 160 0.1 ,  maybe 320 , 250
- * b2c1s1 2000, 20
  
+ *  
  * 
  
  * 
@@ -46,7 +42,7 @@ public class TestDriver_CCATraditional_SimulatedCluster {
     private static  int NUM_PARTITIONS = NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION+ONE;
     
     private static final String MIP_NAME = "glass4";    
-    public static final double MIP_WELLKNOWN_SOLUTION = 1200012600; //90.009878614;
+    public static final double MIP_WELLKNOWN_SOLUTION =1200012600 ;
     private static final int RAMP_UP_TO = 50000;
     private static final int LEAFS_PER_CCA = 5000;
     //private static final int SOLUTION_CYCLE_Tu           fgggd hjhhIME_MINUTES = THREE;
@@ -392,7 +388,7 @@ public class TestDriver_CCATraditional_SimulatedCluster {
                 long numLeafsReaminingLP = astc.getNumActiveLeafsWithGoodLP();
                 logger.debug (""+partitionNumber + "  has mipgap " + mipGapPercent +
                         " and #leafs " + numLeafsReamining + " and good lp #leafs " + numLeafsReaminingLP +                         
-                        " trees count " + astc.getNumTrees()+" raw nodes count "+ astc.getPendingRawNodeCount());
+                        " trees count " + astc.getNumTrees()+" raw nodes count "+ astc.getPendingRawNodeCount() + " max trees created " + astc.maxTreesCreatedDuringSolution);
                 astc.endAll();
             }
             
