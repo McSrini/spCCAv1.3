@@ -26,8 +26,8 @@ import org.apache.log4j.*;
  * 
  *  glass4   , 50000:5000   0.3  - TEST 1 confirmed - took 7 hours
  
- *  
- * 
+ *  glass4 1000000, 100 
+ 
  
  * 
  * run MIP on 5 simulated partitions
@@ -39,12 +39,14 @@ public class TestDriver_CCATraditional_SimulatedCluster {
     private static  Logger logger = null;
     
     private static  int NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION = ZERO;
-    private static  int NUM_PARTITIONS = NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION+ONE;
+    
     
     private static final String MIP_NAME = "glass4";    
-    public static final double MIP_WELLKNOWN_SOLUTION =1200012600 ;
-    private static final int RAMP_UP_TO = 50000;
-    private static final int LEAFS_PER_CCA = 5000;
+    public static final double MIP_WELLKNOWN_SOLUTION =90.009878614 ; //1200012600 ;
+    private static final int RAMP_UP_TO_THIS_MANY_LEAFS = 100000;
+    private static  int NUM_PARTITIONS = 1000;
+    private static double EXPECTED_LEAFS_PER_PARTITION = (RAMP_UP_TO_THIS_MANY_LEAFS +DOUBLE_ZERO)/NUM_PARTITIONS;
+    
     //private static final int SOLUTION_CYCLE_Tu           fgggd hjhhIME_MINUTES = THREE;
     private static final int SOLUTION_CYCLE_TIME_MINUTES = THREE;
     
@@ -69,10 +71,11 @@ public class TestDriver_CCATraditional_SimulatedCluster {
         MPS_FILE_ON_DISK =  "F:\\temporary files here\\"+MIP_NAME+".mps";
         BackTrack=false;
         BAD_MIGRATION_CANDIDATES_DURING_TESTING = new ArrayList<String>();
+        logger.debug ("starting ramp up") ;  
         ActiveSubtree activeSubtreeONE = new ActiveSubtree () ;
-        activeSubtreeONE.solve( RAMP_UP_TO, PLUS_INFINITY, MILLION, true, false); 
+        activeSubtreeONE.solve( RAMP_UP_TO_THIS_MANY_LEAFS, PLUS_INFINITY, MILLION, true, false); 
         ActiveSubtree activeSubtreeTWO = new ActiveSubtree () ;
-        activeSubtreeTWO.solve( RAMP_UP_TO, PLUS_INFINITY, MILLION, true, false); 
+        activeSubtreeTWO.solve( RAMP_UP_TO_THIS_MANY_LEAFS, PLUS_INFINITY, MILLION, true, false); 
         
         //verify activeSubtreeONE and activeSubtreeTWO identical ramp up
         logger.debug ("verify activeSubtreeONE and activeSubtreeTWO identical ramp up") ;   
@@ -108,8 +111,7 @@ public class TestDriver_CCATraditional_SimulatedCluster {
         
         logger.info("Ramp ups are identical, can proceed");
         
-        //now extract CCA nodes
-        logger.debug ("    get CCA nodes having approx "+LEAFS_PER_CCA+" good leafs") ;       
+        //now extract CCA nodes from ramped up tree
         int leafCountRemainingInHomePartition = (int) activeSubtreeONE.getActiveLeafCount();
                          
         List<CCANode> acceptedCCANodes =new ArrayList<CCANode> () ;
@@ -120,15 +122,23 @@ public class TestDriver_CCATraditional_SimulatedCluster {
         List<String> pruneListTWO = new ArrayList<String>();
         
         //get CCA condidates
-        List<CCANode> candidateCCANodes = activeSubtreeONE.getCandidateCCANodes( LEAFS_PER_CCA );             
+        //List<CCANode> candidateCCANodes = activeSubtreeONE.getCandidateCCANodes( LEAFS_PER_CCA );             
+        List<CCANode> candidateCCANodes = activeSubtreeONE.getCandidateCCANodesPostRampup(NUM_PARTITIONS);    
+        
+        if (candidateCCANodes.size() < NUM_PARTITIONS) {
+            logger.error("this splitToCCAPostRampup partitioning cannot be done  , try ramping up to  a larger number of leafs ");
+            exit(ZERO);
+        }
+        
         //for every accepted CCA node, we create a active subtree collection that has all its leafs
         //Then, prune these leafs in preparation for creating the next batch of CCA nodes
         //
         //active subtree collection needs to be formed before the leafs are "pruned"
         for (CCANode ccaNode: candidateCCANodes){
 
-            if (ccaNode.getPackingFactor() < TWO) {
-                logger.debug (""+ccaNode.nodeID + " has good packing factor " +ccaNode.getPackingFactor() + " and prune list size " + ccaNode.pruneList.size() ) ; 
+            if (ccaNode.getPackingFactor() < TWO && ccaNode.pruneList.size() > EXPECTED_LEAFS_PER_PARTITION/TWO ) {
+                logger.debug (""+ccaNode.nodeID + " has good packing factor " +ccaNode.getPackingFactor() + 
+                        " and prune list size " + ccaNode.pruneList.size() + " depth from root "+ ccaNode.depthOfCCANodeBelowRoot) ; 
                 NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION ++;
                 acceptedCCANodes.add(ccaNode);
 
@@ -145,7 +155,8 @@ public class TestDriver_CCATraditional_SimulatedCluster {
                 pruneListONE.addAll( ccaNode.pruneList);
                 pruneListTWO.addAll( ccaNode.pruneList);
 
-            }               
+            }   
+            if (NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION >=NUM_PARTITIONS-1 )             break; //leave 1 node on home partition
 
         }
         leafCountRemainingInHomePartition = (int) activeSubtreeONE.getActiveLeafCount();
@@ -156,8 +167,7 @@ public class TestDriver_CCATraditional_SimulatedCluster {
         logger.debug ("number of CCA nodes collected = "+acceptedCCANodes.size()) ;            
         for ( int index = ZERO; index <  acceptedCCANodes.size(); index++){
             logger.debug("accepted CCA node is : " + acceptedCCANodes.get(index)) ;
-            logger.debug ("number of leafs in corresponding active subtree collections is = " + 
-                          (activeSubtreeCollectionList.get(index).getPendingRawNodeCount() + activeSubtreeCollectionList.get(index).getNumTrees()) );              
+            logger.debug ("number of leafs in corresponding active subtree collections is = " +     (activeSubtreeCollectionList.get(index).getPendingRawNodeCount() + activeSubtreeCollectionList.get(index).getNumTrees()) );              
         }
         logger.debug ("NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION "+NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION + " home part left with leafcount "+leafCountRemainingInHomePartition);
         
@@ -349,7 +359,10 @@ public class TestDriver_CCATraditional_SimulatedCluster {
             }else{
                 //check all the other partitions
                 for (int partitionNumber = ONE;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){   
-                    if (activeSubtreeCollectionList.get(partitionNumber-ONE).getPendingRawNodeCount() + activeSubtreeCollectionList.get(partitionNumber-ONE).getNumTrees() ==ZERO) greenFlagForIterations = false;
+                    if (activeSubtreeCollectionList.get(partitionNumber-ONE).getPendingRawNodeCount() + activeSubtreeCollectionList.get(partitionNumber-ONE).getNumTrees() ==ZERO) {
+                        greenFlagForIterations = false;
+                        logger.info("This partition has no trees or raw nodes reamining: " + partitionNumber);
+                    }
                 }
             }
             
@@ -374,7 +387,7 @@ public class TestDriver_CCATraditional_SimulatedCluster {
                 if (partitionNumber != ZERO){
                     ccaSeedNodeID = tree.seedCCANodeID;
                 } 
-                logger.debug (""+partitionNumber + "  has local mipgap " + localMipGapPercent + " global mipgap " + globalMipGapPercent +
+                logger.debug (" Partition "+partitionNumber + "  has local mipgap " + localMipGapPercent + " global mipgap " + globalMipGapPercent +
                         " and #leafs " + numLeafsReamining + " and good lp #leafs " + numLeafsReaminingLP + 
                         " and was seeded by CCA node " + ccaSeedNodeID  + " and has status "+tree.getStatus());
                 tree.end();

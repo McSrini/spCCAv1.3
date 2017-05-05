@@ -136,7 +136,54 @@ public class CCAFinder {
         return this.candidateCCANodes;
     }
      
-  
+    public List<CCANode> getCandidateCCANodesPostRampup (int numPartitions) {
+        buildRefCounts();
+        //printState(root);
+                
+        //prepare to split tree and find CCA nodes
+        candidateCCANodes.clear();
+        
+        //create a list of sub-tree roots , each of which should end up on 1 partition
+        List<NodeAttachment> subtreeRootList = new ArrayList<NodeAttachment>();               
+        //start with the root, and find all the subtree roots for distribution
+        subtreeRootList.add(root);
+        splitToCCAPostRampup(subtreeRootList, numPartitions);
+        
+        //if we have subtree roots which have only one child, repeatedly move down  the child nodes till the child has 2 kids
+        List<NodeAttachment> removalList = new ArrayList <NodeAttachment>();
+        for (NodeAttachment candidateRoot : subtreeRootList){
+            if (candidateRoot.ccaInformation.refCountLeft==ZERO || candidateRoot.ccaInformation.refCountRight==ZERO) {
+                removalList.add( candidateRoot);                
+            }
+        }
+        for (NodeAttachment node :removalList ) {
+            subtreeRootList.remove(node);
+            subtreeRootList.add(skipToNodeWithTwoChildren(node)) ;
+        }
+        
+        //convert every subtree root into a CCA node
+        for (NodeAttachment node : subtreeRootList){
+            CCAUtilities.populateCCAStatistics(node, this.allLeafs) ;
+            candidateCCANodes.add(node.ccaInformation);    
+        }
+         
+        return this.candidateCCANodes;
+    }
+    
+    //if a node has only 1 child, repeatedly move down  the child nodes till the child has 2 kids
+    private NodeAttachment skipToNodeWithTwoChildren (NodeAttachment node) {
+        NodeAttachment result = node ;
+        while (result.ccaInformation.refCountLeft==ZERO || result.ccaInformation.refCountRight==ZERO ){
+            //move down to the non null side
+            if (result.ccaInformation.refCountLeft!=ZERO) {
+                result = result.leftChildRef;
+            }else {
+                result = result.rightChildRef;
+            }
+        }
+        
+        return result;
+    }
      
     private void buildRefCounts( ){
        buildRefCounts(null);
@@ -172,6 +219,57 @@ public class CCAFinder {
                 
             }//end while
         }
+    }
+    
+    //split biggest remaining subtree root into 2 pieces until number of pieces exceeds numPartitions
+    private void splitToCCAPostRampup(    List<NodeAttachment> subtreeRootList, int numPartitions){
+        if (subtreeRootList.size()< numPartitions){
+            
+            //pick the subtree root with the largest ref-count and split it into two
+            //note that eligible sutree roots are those , for which at least 1 child is a non-leaf node ( i.e.   valid CCA node)
+            long maxRefCount = MINUS_INFINITY;
+            int indexOfMax = -ONE;
+             
+            for (int index = ZERO; index < subtreeRootList.size(); index ++){
+                NodeAttachment thisSubtreeRoot = subtreeRootList.get(index);
+                boolean isLeftEligible = thisSubtreeRoot.leftChildRef!=null && !thisSubtreeRoot.leftChildRef.isLeaf() && 
+                        (thisSubtreeRoot.leftChildRef.ccaInformation.refCountLeft+ thisSubtreeRoot.leftChildRef.ccaInformation.refCountRight >ONE);
+                boolean isRightEligible = thisSubtreeRoot.rightChildRef!=null && !thisSubtreeRoot.rightChildRef.isLeaf() &&
+                        (thisSubtreeRoot.rightChildRef.ccaInformation.refCountLeft+ thisSubtreeRoot.rightChildRef.ccaInformation.refCountRight >ONE);
+                if  (!isRightEligible && !isLeftEligible) continue;
+                if (thisSubtreeRoot.ccaInformation.refCountLeft + thisSubtreeRoot.ccaInformation.refCountRight > maxRefCount) {
+                    maxRefCount=thisSubtreeRoot.ccaInformation.refCountLeft + thisSubtreeRoot.ccaInformation.refCountRight;
+                    indexOfMax= index;
+                    
+                }
+            }
+            
+            logger.debug("maxRefCount " + maxRefCount + " at Index "+ indexOfMax + " " + subtreeRootList.get(indexOfMax).ccaInformation.refCountLeft + " + "+subtreeRootList.get(indexOfMax).ccaInformation.refCountRight );
+            if (indexOfMax< ZERO){
+                //this partitioning cannot be done
+                logger.error("this splitToCCAPostRampup partitioning cannot be done  , try ramping up to  a larger number of leafs ");
+            } else{
+                //get the candidate with biggest ref count
+                NodeAttachment thisSubtreeRoot = subtreeRootList.get(indexOfMax);
+                //split it into 2
+                subtreeRootList.remove(thisSubtreeRoot );
+                if (thisSubtreeRoot.leftChildRef!=null && !thisSubtreeRoot.leftChildRef.isLeaf()) {
+                    if (thisSubtreeRoot.leftChildRef.ccaInformation.refCountLeft +thisSubtreeRoot.leftChildRef.ccaInformation.refCountRight > ONE) 
+                        subtreeRootList.add(thisSubtreeRoot.leftChildRef);
+                        logger.debug("addded left child having refcount" + thisSubtreeRoot.leftChildRef.ccaInformation.refCountLeft + " + "+thisSubtreeRoot.leftChildRef.ccaInformation.refCountRight) ;
+                }
+                if (thisSubtreeRoot.rightChildRef!=null&& !thisSubtreeRoot.rightChildRef.isLeaf()) {
+                    if (thisSubtreeRoot.rightChildRef.ccaInformation.refCountLeft + thisSubtreeRoot.rightChildRef.ccaInformation.refCountRight>ONE ) 
+                        subtreeRootList.add(thisSubtreeRoot.rightChildRef);
+                        logger.debug("addded right child having refcount" + thisSubtreeRoot.rightChildRef.ccaInformation.refCountLeft + " + " +thisSubtreeRoot.rightChildRef.ccaInformation.refCountRight) ;
+                }
+
+                //make a recursive call
+                splitToCCAPostRampup(     subtreeRootList,   numPartitions);
+            }
+            
+        }       
+        
     }
     
     //start from root and split tree into left and right, looking for candidate CCA nodes

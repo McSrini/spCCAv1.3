@@ -387,6 +387,12 @@ public class ActiveSubtree {
     public List<CCANode> getCandidateCCANodes (int count)   {
         return ccaFinder.  getCandidateCCANodes ( count);        
     }    
+        
+    //use this method to split the ramped-up tree into roughly equal partitions
+    public List<CCANode> getCandidateCCANodesPostRampup (int numPartitions)   {
+        return ccaFinder.  getCandidateCCANodesPostRampup ( numPartitions);        
+    }    
+    
     
     public List<String> getPruneList ( CCANode ccaNode) {
         return ccaNode.pruneList;
