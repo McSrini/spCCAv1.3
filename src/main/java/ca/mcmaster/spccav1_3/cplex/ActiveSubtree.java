@@ -6,7 +6,7 @@
 package ca.mcmaster.spccav1_3.cplex;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
-import static ca.mcmaster.spccav1_3.TestDriver_CCATraditional_SimulatedCluster.MIP_WELLKNOWN_SOLUTION;
+import static ca.mcmaster.spccav1_3.Parameters.MIP_WELLKNOWN_SOLUTION;
 import ca.mcmaster.spccav1_3.cb.CBInstructionGenerator;
 import ca.mcmaster.spccav1_3.cca.CCAFinder;
 import ca.mcmaster.spccav1_3.cca.CCANode;
