@@ -11,9 +11,10 @@ package ca.mcmaster.spccav1_3;
  */
 public class Parameters {
     
-    public static final String MIP_NAME_UNDER_TEST = "glass4";    
-    public static final double MIP_WELLKNOWN_SOLUTION =90.009878614 ; //1200012600 ;
-    public static final int RAMP_UP_TO_THIS_MANY_LEAFS = 100000;
+    //defaults which each test can change
+    public static   String MIP_NAME_UNDER_TEST = "glass4";    
+    public static   double MIP_WELLKNOWN_SOLUTION = 1200012600 ;
+    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 100000;
     
     
 }

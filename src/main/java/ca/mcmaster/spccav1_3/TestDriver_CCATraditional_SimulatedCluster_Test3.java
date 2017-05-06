@@ -6,8 +6,7 @@
 package ca.mcmaster.spccav1_3;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
-import static ca.mcmaster.spccav1_3.Parameters.MIP_NAME_UNDER_TEST;
-import static ca.mcmaster.spccav1_3.Parameters.RAMP_UP_TO_THIS_MANY_LEAFS;
+import static ca.mcmaster.spccav1_3.Parameters.*; 
 import ca.mcmaster.spccav1_3.cb.CBInstructionTree;
 import ca.mcmaster.spccav1_3.cca.CCANode;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtree;
@@ -26,17 +25,14 @@ import org.apache.log4j.*;
  *
  * @author tamvadss
  * 
- *  glass4   , 50000:5000   0.3  - TEST 1 confirmed - took 7 hours
- 
- *  glass4 1000000, 100 
- 
+ *  test 3 with atlanta-ip takes 18 hours
  
  * 
  * run MIP on 5 simulated partitions
  * sub problems created using variable bound merging, and solved using traditional branch and bound
  * 2 ramp ups, one for using CCA and one without CCA
  */
-public class TestDriver_CCATraditional_SimulatedCluster_Test2 {
+public class TestDriver_CCATraditional_SimulatedCluster_Test3 {
     
     private static  Logger logger = null;
     
@@ -45,18 +41,18 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test2 {
     
 
     private static  int NUM_PARTITIONS = 100;
-    private static double EXPECTED_LEAFS_PER_PARTITION = (RAMP_UP_TO_THIS_MANY_LEAFS +DOUBLE_ZERO)/NUM_PARTITIONS;
+    private static double EXPECTED_LEAFS_PER_PARTITION = PLUS_INFINITY;
     
     //private static final int SOLUTION_CYCLE_Tu           fgggd hjhhIME_MINUTES = THREE;
     private static final int SOLUTION_CYCLE_TIME_MINUTES = THREE;
     
     public static void main(String[] args) throws Exception {
             
-        logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test2.class);
+        logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test3.class);
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCATraditional_SimulatedCluster_Test2.class.getSimpleName()+ LOG_FILE_EXTENSION);
+            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCATraditional_SimulatedCluster_Test3.class.getSimpleName()+ LOG_FILE_EXTENSION);
             rfa.setMaxBackupIndex(TEN*TEN);
             logger.addAppender(rfa);
             logger.setAdditivity(false);
@@ -66,6 +62,10 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test2 {
             exit(1);
         }
         
+        MIP_NAME_UNDER_TEST = "atlanta-ip";    
+        MIP_WELLKNOWN_SOLUTION =  90.009878614 ; 
+        RAMP_UP_TO_THIS_MANY_LEAFS = 6000;
+        EXPECTED_LEAFS_PER_PARTITION = (RAMP_UP_TO_THIS_MANY_LEAFS +DOUBLE_ZERO)/NUM_PARTITIONS;
          
         //first run 2 identical ramp ups
         MPS_FILE_ON_DISK =  "F:\\temporary files here\\"+MIP_NAME_UNDER_TEST+".mps";
@@ -282,7 +282,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test2 {
                 if (partitionNumber != ZERO){
                     ccaSeedNodeID = tree.seedCCANodeID;
                 } 
-                logger.debug (""+partitionNumber + "  has local mipgap " + localMipGapPercent + " global mipgap " + globalMipGapPercent +
+                logger.debug ("Partition "+partitionNumber + "  has local mipgap " + localMipGapPercent + " global mipgap " + globalMipGapPercent +
                         " and #leafs " + numLeafsReamining + " and good lp #leafs " + numLeafsReaminingLP + 
                         " and was seeded by CCA node " + ccaSeedNodeID  + " and has status "+tree.getStatus());
                 tree.end();
@@ -399,7 +399,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test2 {
                                          astc.getRelativeMIPGapPercent():-ONE;
                 long numLeafsReamining = astc.getNumActiveLeafs();
                 long numLeafsReaminingLP = astc.getNumActiveLeafsWithGoodLP();
-                logger.debug (""+partitionNumber + "  has mipgap " + mipGapPercent +
+                logger.debug ("Partition "+partitionNumber + "  has mipgap " + mipGapPercent +
                         " and #leafs " + numLeafsReamining + " and good lp #leafs " + numLeafsReaminingLP +                         
                         " trees count " + astc.getNumTrees()+" raw nodes count "+ astc.getPendingRawNodeCount() + " max trees created " + astc.maxTreesCreatedDuringSolution);
                 astc.endAll();
