@@ -215,7 +215,7 @@ public class ActiveSubtree {
     }
     
     //for testing
-    public void simpleSolve(int timeLimitMinutes, boolean useEmptyCallback, boolean useInMemory, List<String> pruneList) throws IloException{
+    public void simpleSolve(double timeLimitMinutes, boolean useEmptyCallback, boolean useInMemory, List<String> pruneList) throws IloException{
         logger.debug("simpleSolve Started at "+LocalDateTime.now()) ;
         cplex.clearCallbacks();
         if (useEmptyCallback) this.cplex.use(new PruneBranchHandler( pruneList));  
@@ -407,7 +407,7 @@ public class ActiveSubtree {
         }
     }
     
-    public void setParams (int timeLimitMinutes, boolean inMemory) throws IloException {
+    public void setParams (double timeLimitMinutes, boolean inMemory) throws IloException {
         if (inMemory) cplex.setParam(IloCplex.Param.MIP.Strategy.File, ZERO); 
         if (timeLimitMinutes>ZERO) cplex.setParam(IloCplex.Param.TimeLimit, timeLimitMinutes*SIXTY); 
         if (BackTrack) cplex.setParam( IloCplex.Param.MIP.Strategy.Backtrack,  ZERO); 

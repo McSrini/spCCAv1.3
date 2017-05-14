@@ -6,8 +6,7 @@
 package ca.mcmaster.spccav1_3;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
-import static ca.mcmaster.spccav1_3.Parameters.MIP_NAME_UNDER_TEST;
-import static ca.mcmaster.spccav1_3.Parameters.RAMP_UP_TO_THIS_MANY_LEAFS;
+import static ca.mcmaster.spccav1_3.Parameters.*; 
 import ca.mcmaster.spccav1_3.cb.CBInstructionTree;
 import ca.mcmaster.spccav1_3.cca.CCANode;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtree;
@@ -26,34 +25,36 @@ import org.apache.log4j.*;
  *
  * @author tamvadss
  * 
- *  glass4   , 50000:5000   0.3  - TEST 1 confirmed - took 7 hours
- 
- *  glass4 1000000, 100 
- 
+ *  test 3 with atlanta-ip takes 18 hours
+ * 
+ * //b2c1s1 test takes 6 days to complete
  
  * 
  * run MIP on 5 simulated partitions
  * sub problems created using variable bound merging, and solved using traditional branch and bound
  * 2 ramp ups, one for using CCA and one without CCA
  */
-public class TestDriver_CCATraditional_SimulatedCluster_Test1 {
+public class TestDriver_CCATraditional_SimulatedCluster_Test4 {
     
     private static  Logger logger = null;
     
     private static  int NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION = ZERO;
-    private static int NUM_PARTITIONS = NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION+ONE;
     
-    private static final int LEAFS_PER_CCA = 5000;
+    
+
+    private static  int NUM_PARTITIONS = 100;
+    private static double EXPECTED_LEAFS_PER_PARTITION = PLUS_INFINITY;
     
     //private static final int SOLUTION_CYCLE_Tu           fgggd hjhhIME_MINUTES = THREE;
-     
+    
+    
     public static void main(String[] args) throws Exception {
             
-        logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test1.class);
+        logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test4.class);
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCATraditional_SimulatedCluster_Test1.class.getSimpleName()+ LOG_FILE_EXTENSION);
+            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCATraditional_SimulatedCluster_Test4.class.getSimpleName()+ LOG_FILE_EXTENSION);
             rfa.setMaxBackupIndex(TEN*TEN);
             logger.addAppender(rfa);
             logger.setAdditivity(false);
@@ -63,7 +64,10 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test1 {
             exit(1);
         }
         
-        RAMP_UP_TO_THIS_MANY_LEAFS = 50000; 
+        MIP_NAME_UNDER_TEST = "b2c1s1";    
+        MIP_WELLKNOWN_SOLUTION =   25687.9 ; 
+        RAMP_UP_TO_THIS_MANY_LEAFS = 10000 ;
+        EXPECTED_LEAFS_PER_PARTITION = (RAMP_UP_TO_THIS_MANY_LEAFS +DOUBLE_ZERO)/NUM_PARTITIONS;
          
         //first run 2 identical ramp ups
         MPS_FILE_ON_DISK =  "F:\\temporary files here\\"+MIP_NAME_UNDER_TEST+".mps";
@@ -120,10 +124,13 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test1 {
         List<String> pruneListTWO = new ArrayList<String>();
         
         //get CCA condidates
-        List<CCANode> candidateCCANodes = activeSubtreeONE.getCandidateCCANodes( LEAFS_PER_CCA );             
-        //List<CCANode> candidateCCANodes = activeSubtreeONE.getCandidateCCANodesPostRampup(NUM_PARTITIONS);    
+        //List<CCANode> candidateCCANodes = activeSubtreeONE.getCandidateCCANodes( LEAFS_PER_CCA );             
+        List<CCANode> candidateCCANodes = activeSubtreeONE.getCandidateCCANodesPostRampup(NUM_PARTITIONS);    
         
-         
+        if (candidateCCANodes.size() < NUM_PARTITIONS) {
+            logger.error("this splitToCCAPostRampup partitioning cannot be done  , try ramping up to  a larger number of leafs ");
+            exit(ZERO);
+        }
         
         //for every accepted CCA node, we create a active subtree collection that has all its leafs
         //Then, prune these leafs in preparation for creating the next batch of CCA nodes
@@ -131,7 +138,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test1 {
         //active subtree collection needs to be formed before the leafs are "pruned"
         for (CCANode ccaNode: candidateCCANodes){
 
-            if (ccaNode.getPackingFactor() < TWO   ) {
+            if (ccaNode.getPackingFactor() < TWO && ccaNode.pruneList.size() > EXPECTED_LEAFS_PER_PARTITION/TWO ) {
                 logger.debug (""+ccaNode.nodeID + " has good packing factor " +ccaNode.getPackingFactor() + 
                         " and prune list size " + ccaNode.pruneList.size() + " depth from root "+ ccaNode.depthOfCCANodeBelowRoot) ; 
                 NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION ++;
@@ -151,7 +158,8 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test1 {
                 pruneListTWO.addAll( ccaNode.pruneList);
 
             }   
-             
+            if (NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION >=NUM_PARTITIONS-1 )             break; //leave 1 node on home partition
+
         }
         leafCountRemainingInHomePartition = (int) activeSubtreeONE.getActiveLeafCount();
          
@@ -178,7 +186,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test1 {
         }
         
         //PREPARATIONS COMPLETE
-        exit(8);
+        
         
         //TEST 1 uses CCA
         //LAter on , TEST 2 will use individual leafs
@@ -276,7 +284,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test1 {
                 if (partitionNumber != ZERO){
                     ccaSeedNodeID = tree.seedCCANodeID;
                 } 
-                logger.debug (""+partitionNumber + "  has local mipgap " + localMipGapPercent + " global mipgap " + globalMipGapPercent +
+                logger.debug ("Partition "+partitionNumber + "  has local mipgap " + localMipGapPercent + " global mipgap " + globalMipGapPercent +
                         " and #leafs " + numLeafsReamining + " and good lp #leafs " + numLeafsReaminingLP + 
                         " and was seeded by CCA node " + ccaSeedNodeID  + " and has status "+tree.getStatus());
                 tree.end();
@@ -295,7 +303,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test1 {
         }
         
         //we allow upto 100 more iterations to see if a partition completes
-        int maxIterationsAllowedWithIndividualLeafs = HUNDRED +iterationNumber;
+        int maxIterationsAllowedWithIndividualLeafs = TEN*iterationNumber;
         greenFlagForIterations = true;
         
         for (iterationNumber=ZERO; greenFlagForIterations &&iterationNumber<maxIterationsAllowedWithIndividualLeafs; iterationNumber++){ //same # of iterations as test 1
@@ -393,7 +401,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test1 {
                                          astc.getRelativeMIPGapPercent():-ONE;
                 long numLeafsReamining = astc.getNumActiveLeafs();
                 long numLeafsReaminingLP = astc.getNumActiveLeafsWithGoodLP();
-                logger.debug (""+partitionNumber + "  has mipgap " + mipGapPercent +
+                logger.debug ("Partition "+partitionNumber + "  has mipgap " + mipGapPercent +
                         " and #leafs " + numLeafsReamining + " and good lp #leafs " + numLeafsReaminingLP +                         
                         " trees count " + astc.getNumTrees()+" raw nodes count "+ astc.getPendingRawNodeCount() + " max trees created " + astc.maxTreesCreatedDuringSolution);
                 astc.endAll();

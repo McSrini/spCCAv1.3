@@ -58,7 +58,9 @@ public class Constants {
     //for testing
     public static   boolean BackTrack = true;
     
-    public static   int TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE = THREE ;
+    public static   int TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE = TWO ;    
+    public static   double MINIMUM_TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE = 0.5 ;//30 seconds
+    public static final int SOLUTION_CYCLE_TIME_MINUTES = FOUR;
     
     
 }

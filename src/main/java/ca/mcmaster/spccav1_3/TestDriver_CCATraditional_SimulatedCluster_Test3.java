@@ -44,8 +44,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test3 {
     private static double EXPECTED_LEAFS_PER_PARTITION = PLUS_INFINITY;
     
     //private static final int SOLUTION_CYCLE_Tu           fgggd hjhhIME_MINUTES = THREE;
-    private static final int SOLUTION_CYCLE_TIME_MINUTES = THREE;
-    
+     
     public static void main(String[] args) throws Exception {
             
         logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test3.class);

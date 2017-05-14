@@ -139,14 +139,16 @@ public class ActiveSubtreeCollection {
         }
     }
      
-    public void solve (boolean useSimple, double timeLimitMinutes, boolean   useEmptyCallback, int timeSlicePerTreeInMInutes ) throws Exception {
+    public void solve (boolean useSimple, double timeLimitMinutes, boolean   useEmptyCallback, double timeSlicePerTreeInMInutes  ) throws Exception {
         logger.info(" \n solving ActiveSubtree Collection ... " + ID); 
         Instant startTime = Instant.now();
         
         
-        while (activeSubTreeList.size()+ this.rawNodeList.size()>ZERO && Duration.between( startTime, Instant.now()).toMinutes()< timeLimitMinutes){
+        while (activeSubTreeList.size()+ this.rawNodeList.size()>ZERO && Duration.between( startTime, Instant.now()).toMillis()< timeLimitMinutes*SIXTY*THOUSAND){
             
-            logger.info("time in minutes left = "+ (timeLimitMinutes -Duration.between( startTime, Instant.now()).toMinutes()));
+            double timeUsedUpMInutes = ( DOUBLE_ZERO+ Duration.between( startTime, Instant.now()).toMillis() ) / (SIXTY*THOUSAND) ;
+                
+            logger.info("time in minutes left = "+ (timeLimitMinutes -timeUsedUpMInutes) );
             if(isHaltFilePresent())  exit(ONE);
                         
             //pick tree with best lp
@@ -186,10 +188,19 @@ public class ActiveSubtreeCollection {
 
 
             if (useSimple){
-                int timeSlice = (int)Math.min( timeSlicePerTreeInMInutes, Duration.between( startTime, Instant.now()).toMinutes() );
-                if (timeSlice < ONE) timeSlice =ONE;
-                logger.info("Solving tree seeded by cca node "+ tree.seedCCANodeID + " with " + tree.guid  + " for minutes " +  timeSlice);  
-                tree.simpleSolve(timeSlice,  useEmptyCallback,  false, null);                
+                
+                double timeSlice = timeSlicePerTreeInMInutes; //default
+                
+                if (  timeLimitMinutes -timeUsedUpMInutes < timeSlicePerTreeInMInutes ) {
+                    timeSlice= timeLimitMinutes -timeUsedUpMInutes;
+                    if (timeSlice < MINIMUM_TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE) timeSlice = MINIMUM_TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE; //15 second least count
+                }
+                
+                if (timeSlice>ZERO) {
+                    logger.info("Solving tree seeded by cca node "+ tree.seedCCANodeID + " with " + tree.guid  + " for minutes " +  timeSlice);  
+                    tree.simpleSolve(timeSlice,  useEmptyCallback,  false, null);
+                }
+                                
             } else {
                 //tree.solve( -ONE,  incumbentValue ,  timeSlicePerTree , false, isCollectionFeasibleOrOptimal());
             }
