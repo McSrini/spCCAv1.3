@@ -13,6 +13,8 @@ import static ca.mcmaster.spccav1_3.Constants.ONE;
 import static ca.mcmaster.spccav1_3.Constants.PLUS_INFINITY;
 import static ca.mcmaster.spccav1_3.Constants.*;
 import ca.mcmaster.spccav1_3.cca.CCANode;
+import static ca.mcmaster.spccav1_3.cplex.NodeSelectionStartegyEnum.BEST_ESTIMATE_FIRST;
+import static ca.mcmaster.spccav1_3.cplex.NodeSelectionStartegyEnum.STRICT_BEST_FIRST;
 import ca.mcmaster.spccav1_3.cplex.datatypes.BranchingInstruction;
 import ca.mcmaster.spccav1_3.cplex.datatypes.SolutionVector;
 import ilog.concert.IloException;
@@ -49,7 +51,7 @@ public class ActiveSubtreeCollection {
     private SolutionVector incumbentSolution = null;
     
     //astc id
-    private int ID;
+    private int PARTITION_ID;
     
     //keep track of max trees created in this collection during solution
     public    int maxTreesCreatedDuringSolution = ONE;
@@ -73,9 +75,9 @@ public class ActiveSubtreeCollection {
         this.instructionsFromOriginalMIP = instructionsFromOriginalMip;
         if (useCutoff) this.incumbentValue= cutoff;
         //create 1 tree
-        this.promoteCCANodeIntoActiveSubtree( this.getRawNodeWithBestLPRelaxation(), false);
+        //this.promoteCCANodeIntoActiveSubtree( this.getRawNodeWithBestLPRelaxation(), false);
         
-        ID=id;
+        PARTITION_ID=id;
     }
     
     public void setCutoff (double cutoff) {
@@ -139,8 +141,9 @@ public class ActiveSubtreeCollection {
         }
     }
      
-    public void solve (boolean useSimple, double timeLimitMinutes, boolean   useEmptyCallback, double timeSlicePerTreeInMInutes  ) throws Exception {
-        logger.info(" \n solving ActiveSubtree Collection ... " + ID); 
+    public void solve (boolean useSimple, double timeLimitMinutes, boolean   useEmptyCallback, double timeSlicePerTreeInMInutes ,  
+            NodeSelectionStartegyEnum nodeSelectionStartegy ) throws Exception {
+        logger.info(" \n solving ActiveSubtree Collection ... " + PARTITION_ID); 
         Instant startTime = Instant.now();
         
         
@@ -148,13 +151,13 @@ public class ActiveSubtreeCollection {
             
             double timeUsedUpMInutes = ( DOUBLE_ZERO+ Duration.between( startTime, Instant.now()).toMillis() ) / (SIXTY*THOUSAND) ;
                 
-            logger.info("time in minutes left = "+ (timeLimitMinutes -timeUsedUpMInutes) );
-            if(isHaltFilePresent())  exit(ONE);
+            logger.info("time in seconds left = "+ (timeLimitMinutes -timeUsedUpMInutes)*SIXTY );
+            
                         
             //pick tree with best lp
-            ActiveSubtree tree = getTreeWithBestRemaining_LPValue();
+            ActiveSubtree tree = this.getTreeWithBestRemainingMetric(nodeSelectionStartegy );
             //pick raw node with best LP
-            CCANode rawNode = this.getRawNodeWithBestLPRelaxation();
+            CCANode rawNode = this.getRawNodeWithBestMetric( nodeSelectionStartegy);
             //check if promotion required
             if (null != rawNode && tree !=null){
                 if ((IS_MAXIMIZATION  && rawNode.lpRelaxationValue> tree.getBestRemaining_LPValue() )  || 
@@ -211,7 +214,7 @@ public class ActiveSubtreeCollection {
                 if ((IS_MAXIMIZATION && incumbentValue< objVal)  || (!IS_MAXIMIZATION && incumbentValue> objVal) ){
                     incumbentValue = objVal;
                     this.incumbentSolution=tree.getSolutionVector();
-                    logger.info("Incumbent updated to  "+ this.incumbentValue);
+                    logger.info("Incumbent updated to  "+ this.incumbentValue + " by tree " + tree.guid + " on this partition " + PARTITION_ID);
                 }
             }
             
@@ -227,7 +230,7 @@ public class ActiveSubtreeCollection {
             
         }
         
-        logger.info(" ActiveSubtree Collection solved to completion "+ID );
+        logger.info(" ActiveSubtree Collection solved to completion "+PARTITION_ID );
     }
         
     public double getIncumbentValue (){
@@ -249,7 +252,8 @@ public class ActiveSubtreeCollection {
     private void printStatus() throws IloException {
         for (ActiveSubtree activeSubtree: this.activeSubTreeList){
             logger.debug( "Active tree " + activeSubtree.seedCCANodeID + ", " + activeSubtree.guid + ", " +   
-                           activeSubtree.getStatus() +", " +activeSubtree.getBestRemaining_LPValue() );
+                           activeSubtree.getStatus() +", BestRemaining_LPValue=" +activeSubtree.getBestRemaining_LPValue() +
+                    " BestofBestEstimate="+activeSubtree.bestOFTheBestEstimates + " LowestSumofInfeasibilities="+ activeSubtree.lowestSumOFIntegerInfeasibilities);
         }
         logger.debug("Number of pending raw nodes " + getPendingRawNodeCount());
     }
@@ -257,34 +261,48 @@ public class ActiveSubtreeCollection {
     private double getBestReaminingLPRElaxValue () throws Exception{
         double   bestReamining_LPValue = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
         
-        if (getTreeWithBestRemaining_LPValue()!=null) bestReamining_LPValue =getTreeWithBestRemaining_LPValue().getBestRemaining_LPValue();
+        ActiveSubtree tree= getTreeWithBestRemainingMetric(NodeSelectionStartegyEnum.STRICT_BEST_FIRST);
+        if (tree!=null) bestReamining_LPValue =     tree.getBestRemaining_LPValue();
         
-        if(getRawNodeWithBestLPRelaxation()!=null){
+        CCANode rawNode = this.getRawNodeWithBestMetric(STRICT_BEST_FIRST);
+        if( rawNode!=null){
             if (IS_MAXIMIZATION){
-                bestReamining_LPValue = Math.max(bestReamining_LPValue, getRawNodeWithBestLPRelaxation().lpRelaxationValue) ;
+                bestReamining_LPValue = Math.max(bestReamining_LPValue, rawNode.lpRelaxationValue) ;
             }else {
-                bestReamining_LPValue = Math.min(bestReamining_LPValue, getRawNodeWithBestLPRelaxation().lpRelaxationValue) ;
+                bestReamining_LPValue = Math.min(bestReamining_LPValue, rawNode.lpRelaxationValue) ;
             }
         }
         
         return     bestReamining_LPValue;
     }
     
-    private ActiveSubtree getTreeWithBestRemaining_LPValue() throws Exception{
+    private ActiveSubtree getTreeWithBestRemainingMetric (NodeSelectionStartegyEnum strategyEnum) throws Exception{
                                                    
-        double   bestReamining_LPValue = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
+        double   bestReamining_metric =  NodeSelectionStartegyEnum.LOWEST_SUM_INFEASIBILITY_FIRST.equals(strategyEnum ) ? PLUS_INFINITY: (IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY);
         ActiveSubtree result = null;
         
         for (ActiveSubtree activeSubtree: this.activeSubTreeList){
             if (IS_MAXIMIZATION) {
-                if (bestReamining_LPValue<  activeSubtree.getBestRemaining_LPValue()) {
+                if (STRICT_BEST_FIRST.equals(strategyEnum) && bestReamining_metric<  activeSubtree.getBestRemaining_LPValue()) {
                     result = activeSubtree;
-                    bestReamining_LPValue=activeSubtree.getBestRemaining_LPValue();
+                    bestReamining_metric=activeSubtree.getBestRemaining_LPValue();
+                } else if ( BEST_ESTIMATE_FIRST.equals(strategyEnum) && bestReamining_metric<  activeSubtree.bestOFTheBestEstimates){
+                    result = activeSubtree;
+                    bestReamining_metric=activeSubtree.bestOFTheBestEstimates;
+                } else if (NodeSelectionStartegyEnum.LOWEST_SUM_INFEASIBILITY_FIRST.equals(strategyEnum ) && bestReamining_metric > activeSubtree.lowestSumOFIntegerInfeasibilities) {
+                    result = activeSubtree;
+                    bestReamining_metric=activeSubtree.lowestSumOFIntegerInfeasibilities;
                 }
             }else {
-                if (bestReamining_LPValue>  activeSubtree.getBestRemaining_LPValue()) {
+                if (STRICT_BEST_FIRST.equals(strategyEnum) && bestReamining_metric>  activeSubtree.getBestRemaining_LPValue()) {
                     result = activeSubtree;
-                    bestReamining_LPValue=activeSubtree.getBestRemaining_LPValue();
+                    bestReamining_metric=activeSubtree.getBestRemaining_LPValue();
+                }else if ( BEST_ESTIMATE_FIRST.equals(strategyEnum) && bestReamining_metric>  activeSubtree.bestOFTheBestEstimates){
+                    result = activeSubtree;
+                    bestReamining_metric=activeSubtree.bestOFTheBestEstimates;
+                } else if (NodeSelectionStartegyEnum.LOWEST_SUM_INFEASIBILITY_FIRST.equals(strategyEnum ) && bestReamining_metric > activeSubtree.lowestSumOFIntegerInfeasibilities) {
+                    result = activeSubtree;
+                    bestReamining_metric=activeSubtree.lowestSumOFIntegerInfeasibilities;
                 }
             }
           
@@ -292,22 +310,35 @@ public class ActiveSubtreeCollection {
         return result;
     }
     
-    private CCANode getRawNodeWithBestLPRelaxation () {
-        double   bestReamining_LPValue = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
+    private CCANode getRawNodeWithBestMetric  (NodeSelectionStartegyEnum strategyEnum) {
+        double   bestReamining_metric =  NodeSelectionStartegyEnum.LOWEST_SUM_INFEASIBILITY_FIRST.equals(strategyEnum ) ? PLUS_INFINITY: (IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY);
         CCANode result = null;
         
         for (CCANode ccaNode : this.rawNodeList){
             if (IS_MAXIMIZATION) {
-                if (bestReamining_LPValue<  ccaNode.lpRelaxationValue) {
+                if (STRICT_BEST_FIRST.equals(strategyEnum) &&  bestReamining_metric<  ccaNode.lpRelaxationValue) {
                     result = ccaNode;
-                    bestReamining_LPValue=ccaNode.lpRelaxationValue;
+                    bestReamining_metric=ccaNode.lpRelaxationValue;
+                } else if (NodeSelectionStartegyEnum.BEST_ESTIMATE_FIRST .equals(strategyEnum) &&  bestReamining_metric<  ccaNode.bestEstimateValue) {
+                    result = ccaNode;
+                    bestReamining_metric=ccaNode.bestEstimateValue;
+                } else if (NodeSelectionStartegyEnum.LOWEST_SUM_INFEASIBILITY_FIRST.equals(strategyEnum ) && bestReamining_metric > ccaNode.sumOfIntegerInfeasibilities) {
+                    result = ccaNode;
+                    bestReamining_metric=ccaNode.sumOfIntegerInfeasibilities;
                 }
             }else {
-                if (bestReamining_LPValue>  ccaNode.lpRelaxationValue) {
+                if (STRICT_BEST_FIRST.equals(strategyEnum) &&  bestReamining_metric>  ccaNode.lpRelaxationValue) {
                     result = ccaNode;
-                    bestReamining_LPValue=ccaNode.lpRelaxationValue;
+                    bestReamining_metric=ccaNode.lpRelaxationValue;
+                }else if ( NodeSelectionStartegyEnum.BEST_ESTIMATE_FIRST .equals(strategyEnum) &&  bestReamining_metric>  ccaNode.bestEstimateValue) {
+                    result = ccaNode;
+                    bestReamining_metric=ccaNode.bestEstimateValue;
+                } else if (NodeSelectionStartegyEnum.LOWEST_SUM_INFEASIBILITY_FIRST.equals(strategyEnum ) && bestReamining_metric > ccaNode.sumOfIntegerInfeasibilities) {
+                    result = ccaNode;
+                    bestReamining_metric=ccaNode.sumOfIntegerInfeasibilities;
                 }
             }
+            
         }
         
         return result;
@@ -323,9 +354,5 @@ public class ActiveSubtreeCollection {
         return activeSubtree;
     }
    
-    private static boolean isHaltFilePresent (){
-        File file = new File("F:\\temporary files here\\haltfile.txt");
-         
-        return file.exists();
-    }
+     
 }

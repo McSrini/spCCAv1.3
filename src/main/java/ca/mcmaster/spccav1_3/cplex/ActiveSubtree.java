@@ -77,6 +77,8 @@ public class ActiveSubtree {
     //temporarily, I am introducing these two variables which are used for statistics
     public long numActiveLeafsAfterSimpleSolve=ZERO ;
     public long numActiveLeafsWithGoodLPAfterSimpleSolve=ZERO ;
+    public double bestOFTheBestEstimates = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
+    public double lowestSumOFIntegerInfeasibilities = PLUS_INFINITY;
     
     static {
         logger.setLevel(Level.OFF);
@@ -230,6 +232,8 @@ public class ActiveSubtree {
         
         numActiveLeafsAfterSimpleSolve =lcnh.numLeafs;
         numActiveLeafsWithGoodLPAfterSimpleSolve =lcnh.numLeafsWithGoodLP;
+        this.bestOFTheBestEstimates = lcnh.bestOFTheBestEstimates;
+        this.lowestSumOFIntegerInfeasibilities = lcnh.lowestSumOFIntegerInfeasibilities;
                         
         logger.debug("simpleSolve completed at "+LocalDateTime.now()) ;
     }   

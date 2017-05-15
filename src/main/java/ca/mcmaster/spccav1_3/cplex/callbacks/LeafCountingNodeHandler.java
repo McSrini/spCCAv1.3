@@ -24,6 +24,8 @@ public class LeafCountingNodeHandler extends IloCplex.NodeCallback {
         
     private static Logger logger=Logger.getLogger(LeafCountingNodeHandler.class);
         
+    public double bestOFTheBestEstimates = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
+    public double lowestSumOFIntegerInfeasibilities = PLUS_INFINITY;
     public long numLeafs = ZERO;
     public long numLeafsWithGoodLP = ZERO;
     public double lpThreshold = ZERO;
@@ -55,6 +57,11 @@ public class LeafCountingNodeHandler extends IloCplex.NodeCallback {
             for (long index = ZERO; index < numLeafs; index++){
                 if (IS_MAXIMIZATION && getObjValue(index)>=lpThreshold) numLeafsWithGoodLP++;
                 if (!IS_MAXIMIZATION&& getObjValue(index)<=lpThreshold) numLeafsWithGoodLP++;
+                
+                if (lowestSumOFIntegerInfeasibilities> getInfeasibilitySum(index)) lowestSumOFIntegerInfeasibilities= getInfeasibilitySum(index);
+                if(bestOFTheBestEstimates < getEstimatedObjValue(index) &&  IS_MAXIMIZATION)bestOFTheBestEstimates = getEstimatedObjValue(index);
+                if(bestOFTheBestEstimates > getEstimatedObjValue(index) && !IS_MAXIMIZATION)bestOFTheBestEstimates = getEstimatedObjValue(index);
+                
             }
             
             abort();

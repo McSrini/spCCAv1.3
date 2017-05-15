@@ -10,6 +10,7 @@ import ca.mcmaster.spccav1_3.cb.CBInstructionTree;
 import ca.mcmaster.spccav1_3.cca.CCANode;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtree;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtreeCollection;
+import static ca.mcmaster.spccav1_3.cplex.NodeSelectionStartegyEnum.STRICT_BEST_FIRST;
 import ca.mcmaster.spccav1_3.cplex.datatypes.BranchingInstruction;
 import static java.lang.System.exit;
 import java.util.*;
@@ -64,7 +65,7 @@ public class TestDriver_RoundRobin {
         List<CCANode> ccaNodeList = activeSubtree.getActiveLeafsAsCCANodes(null);        
         
         ActiveSubtreeCollection astc = new ActiveSubtreeCollection (ccaNodeList, activeSubtree.instructionsFromOriginalMip, cutoff, useCutoff, 0) ;
-        astc.solve (false, MILLION, false, TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE);
+        astc.solve (false, MILLION, false, TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE, STRICT_BEST_FIRST);
          
     } //end main
     

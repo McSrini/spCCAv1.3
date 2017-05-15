@@ -12,6 +12,7 @@ import ca.mcmaster.spccav1_3.cb.CBInstructionTree;
 import ca.mcmaster.spccav1_3.cca.CCANode;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtree;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtreeCollection;
+import static ca.mcmaster.spccav1_3.cplex.NodeSelectionStartegyEnum.STRICT_BEST_FIRST;
 import ca.mcmaster.spccav1_3.cplex.datatypes.NodeAttachment;
 import ca.mcmaster.spccav1_3.cplex.datatypes.SolutionVector;
 import java.io.File;
@@ -310,7 +311,8 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test1 {
                 if(partitionNumber==ZERO){
                     activeSubtreeTWO.simpleSolve( SOLUTION_CYCLE_TIME_MINUTES ,  true,  false, partitionNumber == ZERO ? pruneListTWO: null);  
                 }else{
-                    activeSubtreeCollectionList.get(partitionNumber-ONE).solve( true, SOLUTION_CYCLE_TIME_MINUTES  ,     true,    TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE  );
+                    activeSubtreeCollectionList.get(partitionNumber-ONE).solve( true, SOLUTION_CYCLE_TIME_MINUTES  ,     
+                            true,    TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE  ,STRICT_BEST_FIRST);
                 }                
             }
             

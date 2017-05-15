@@ -10,6 +10,7 @@ import ca.mcmaster.spccav1_3.cb.CBInstructionTree;
 import ca.mcmaster.spccav1_3.cca.CCANode;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtree;
 import ca.mcmaster.spccav1_3.cplex.ActiveSubtreeCollection;
+import static ca.mcmaster.spccav1_3.cplex.NodeSelectionStartegyEnum.STRICT_BEST_FIRST;
 import ca.mcmaster.spccav1_3.cplex.datatypes.SolutionVector;
 import java.io.File;
 import static java.lang.System.exit;
@@ -108,7 +109,7 @@ public class TestDriver_RoundRobinOnTheFly {
             if (bestKnownSolution!=null) astc.setMIPStart(  bestKnownSolution);
             logger.debug("Started active subtree collection solve for leafs under " +ccaNode.nodeID );
             logger.debug("Starting Mip gap percentage is " + astc.getRelativeMIPGapPercent());
-            astc.solve (true,  TEN*straightSolveTimeTakenInMinutes , false, TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE);
+            astc.solve (true,  TEN*straightSolveTimeTakenInMinutes , false, TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE, STRICT_BEST_FIRST);
             logger.debug("Ended active subtree collection solve for leafs under " +ccaNode.nodeID );
             logger.debug("Mip gap reamining percentage is " + astc.getRelativeMIPGapPercent());
             //logger.debug("Count of nodes reamining is " + astc.getNumActiveLeafs());
