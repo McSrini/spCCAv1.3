@@ -37,8 +37,12 @@ public class CBInstructionTree  implements Serializable  {
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+CBInstructionTree.class.getSimpleName()+ LOG_FILE_EXTENSION));
+            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+CBInstructionTree.class.getSimpleName()+ LOG_FILE_EXTENSION);
+             
+            rfa.setMaxBackupIndex(TEN);
+            logger.addAppender(rfa);
             logger.setAdditivity(false);
+             
         } catch (Exception ex) {
             ///
             System.err.println("Exit: unable to initialize logging");       

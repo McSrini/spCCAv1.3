@@ -7,7 +7,6 @@ package ca.mcmaster.spccav1_3;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
 import static ca.mcmaster.spccav1_3.Parameters.MIP_NAME_UNDER_TEST;
-import static ca.mcmaster.spccav1_3.Parameters.MIP_WELLKNOWN_SOLUTION;
 import static ca.mcmaster.spccav1_3.Parameters.RAMP_UP_TO_THIS_MANY_LEAFS;
 import ca.mcmaster.spccav1_3.cb.CBInstructionTree;
 import ca.mcmaster.spccav1_3.cca.CCANode;
@@ -39,36 +38,36 @@ import org.apache.log4j.*;
  * sub problems created using variable bound merging, and solved using traditional branch and bound
  * 2 ramp ups, one for using CCA and one without CCA
  */
-public class TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts {
+public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_15parts {
     
     private static  Logger logger = null;
     
     private static  int NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION = ZERO;
     
     //  50(20), 100(40) , 200(90), 250(112) parts is ok
-      
-    public static   String        MIP_NAME_UNDER_TEST = "b2c1s1";    
-    public static   double    MIP_WELLKNOWN_SOLUTION =   25687.9 ; 
-    public static   int    RAMP_UP_TO_THIS_MANY_LEAFS = 10000 ;
+     
+    public static   String MIP_NAME_UNDER_TEST = "a1c1s1";    
+    public static   double MIP_WELLKNOWN_SOLUTION =  11503.444125 ;
+    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 10000;
      
  
-    private static  int NUM_PARTITIONS = 100;
+    private static  int NUM_PARTITIONS = 18;
     private static double EXPECTED_LEAFS_PER_PARTITION = (RAMP_UP_TO_THIS_MANY_LEAFS +DOUBLE_ZERO)/NUM_PARTITIONS;
     
     //private static final int SOLUTION_CYCLE_Tu           fgggd hjhhIME_MINUTES = THREE;
      
     public static void main(String[] args) throws Exception {
-              
+        
         if (! isLogFolderEmpty()) {
             System.err.println("\n\n\nClear the log folder before starting the test.");
             exit(ONE);
         }
-         
-        logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts.class);
+            
+        logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_15parts.class);
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts.class.getSimpleName()+ LOG_FILE_EXTENSION);
+            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_15parts.class.getSimpleName()+ LOG_FILE_EXTENSION);
             rfa.setMaxBackupIndex(TEN*TEN);
             logger.addAppender(rfa);
             logger.setAdditivity(false);
@@ -353,7 +352,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts {
                 ActiveSubtree tree = partitionList.get(partitionNumber);
                 
                 double localMipGapPercent = (tree.isFeasible()||tree.isOptimal()) ? tree.getRelativeMIPGapPercent(false, -ONE):-ONE;
-                double globalMipGapPercent =   (incumbentValue < PLUS_INFINITY && incumbentValue > MINUS_INFINITY)?
+                double globalMipGapPercent = (incumbentValue < PLUS_INFINITY && incumbentValue > MINUS_INFINITY)?
                                               tree.getRelativeMIPGapPercent(true, incumbentValue):-ONE;
                 long numLeafsReamining = tree.numActiveLeafsAfterSimpleSolve;
                 long numLeafsReaminingLP = tree.numActiveLeafsWithGoodLPAfterSimpleSolve;
@@ -527,7 +526,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts {
          
         return file.exists();
     }
-        
+    
     private static boolean isLogFolderEmpty() {
         File dir = new File (LOG_FOLDER );
         return (dir.isDirectory() && dir.list().length==ZERO);

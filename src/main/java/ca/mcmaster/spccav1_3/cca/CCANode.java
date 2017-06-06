@@ -94,9 +94,10 @@ public class CCANode  implements Serializable {
         result +=          "Refcounts  "+ this.refCountLeft + " , " + this.refCountRight+ "\n" ;
         result +=          "Skip counts  "+ this.skipCountLeft + " , " + this.skipCountRight+ "\n" ;
         result += "LP solves needed "+ this.numNodeLPSolvesNeeded+ "\n";
-        result += " Here is the single branch map"+ "\n";
+        result += " Here is the single branch map size "+ this.mapOfNodesWithOneMissingBranch.entrySet().size()
+                +"\n";
         for (Map.Entry<Integer, Integer> entry : this.mapOfNodesWithOneMissingBranch.entrySet()) {
-             result +=(entry.getKey() + ", " + entry.getValue() + "\n");
+            // result +=(entry.getKey() + ", " + entry.getValue() + "\n");
         }
         result += " Depth below root " + this.depthOfCCANodeBelowRoot + " and max depth" + this.maxDepthOFTree+ "\n";
         result += " Here is the prune list"+ "\n";

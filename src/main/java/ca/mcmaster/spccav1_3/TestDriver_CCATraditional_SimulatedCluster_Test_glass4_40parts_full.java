@@ -7,7 +7,6 @@ package ca.mcmaster.spccav1_3;
 
 import static ca.mcmaster.spccav1_3.Constants.*;
 import static ca.mcmaster.spccav1_3.Parameters.MIP_NAME_UNDER_TEST;
-import static ca.mcmaster.spccav1_3.Parameters.MIP_WELLKNOWN_SOLUTION;
 import static ca.mcmaster.spccav1_3.Parameters.RAMP_UP_TO_THIS_MANY_LEAFS;
 import ca.mcmaster.spccav1_3.cb.CBInstructionTree;
 import ca.mcmaster.spccav1_3.cca.CCANode;
@@ -39,17 +38,17 @@ import org.apache.log4j.*;
  * sub problems created using variable bound merging, and solved using traditional branch and bound
  * 2 ramp ups, one for using CCA and one without CCA
  */
-public class TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts {
+public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_40parts_full {
     
     private static  Logger logger = null;
     
     private static  int NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION = ZERO;
     
     //  50(20), 100(40) , 200(90), 250(112) parts is ok
-      
-    public static   String        MIP_NAME_UNDER_TEST = "b2c1s1";    
-    public static   double    MIP_WELLKNOWN_SOLUTION =   25687.9 ; 
-    public static   int    RAMP_UP_TO_THIS_MANY_LEAFS = 10000 ;
+     
+    public static   String MIP_NAME_UNDER_TEST = "glass4";    
+    public static   double MIP_WELLKNOWN_SOLUTION =  1200012600 ;
+    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 100000;
      
  
     private static  int NUM_PARTITIONS = 100;
@@ -58,17 +57,17 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts {
     //private static final int SOLUTION_CYCLE_Tu           fgggd hjhhIME_MINUTES = THREE;
      
     public static void main(String[] args) throws Exception {
-              
+        
         if (! isLogFolderEmpty()) {
             System.err.println("\n\n\nClear the log folder before starting the test.");
             exit(ONE);
         }
-         
-        logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts.class);
+            
+        logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test_glass4_40parts_full.class);
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts.class.getSimpleName()+ LOG_FILE_EXTENSION);
+            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCATraditional_SimulatedCluster_Test_glass4_40parts_full.class.getSimpleName()+ LOG_FILE_EXTENSION);
             rfa.setMaxBackupIndex(TEN*TEN);
             logger.addAppender(rfa);
             logger.setAdditivity(false);
@@ -166,8 +165,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts {
         
         
         logger.info("Ramp ups are identical, can proceed");
-        
-        
+         
         //now extract CCA nodes from ramped up tree
         List<CCANode> acceptedCCANodes =new ArrayList<CCANode> () ;
         int leafCountRemainingInHomePartition = (int) activeSubtreeONE.getActiveLeafCount();
@@ -307,14 +305,20 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts {
             //solve every partition for 3 minutes at a time
             for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){                                
                 logger.debug("Solving partition for "+SOLUTION_CYCLE_TIME_MINUTES+" minutes ... Partition_" + partitionNumber );
+                if (partitionNumber == ZERO ) logger.debug(" prune list size before is "+ pruneListONE.size());
                 partitionList.get(partitionNumber).simpleSolve( SOLUTION_CYCLE_TIME_MINUTES ,  true,  false, partitionNumber == ZERO ? pruneListONE: null);                
+                if (partitionNumber == ZERO ) logger.debug(" prune list size after is "+ pruneListONE.size());
             }
             
-            //we are done when 1 partition has no active leafs left, i.e. its optimal or unfeasible
+            //we are done when every partition has no active leafs left, i.e. its optimal or unfeasible
+            greenFlagForIterations=false;
             for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){
-                if (partitionList.get(partitionNumber).isUnFeasible() || partitionList.get(partitionNumber).isOptimal()) {
-                    logger.debug("partition "+ partitionNumber + " solved. Stopping iterations at " + iterationNumber);
-                    greenFlagForIterations=false;
+                if (!partitionList.get(partitionNumber).isUnFeasible() && !partitionList.get(partitionNumber).isOptimal()) {
+                    //logger.debug("partition "+ partitionNumber + " solved. Stopping iterations at " + iterationNumber);
+                    greenFlagForIterations=true;
+                    break;
+                } else {
+                    logger.debug("partition "+ partitionNumber + " solved." + " Status is " +  partitionList.get(partitionNumber).getStatus());
                 }
             }
                          
@@ -353,7 +357,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts {
                 ActiveSubtree tree = partitionList.get(partitionNumber);
                 
                 double localMipGapPercent = (tree.isFeasible()||tree.isOptimal()) ? tree.getRelativeMIPGapPercent(false, -ONE):-ONE;
-                double globalMipGapPercent =   (incumbentValue < PLUS_INFINITY && incumbentValue > MINUS_INFINITY)?
+                double globalMipGapPercent = (incumbentValue < PLUS_INFINITY && incumbentValue > MINUS_INFINITY)?
                                               tree.getRelativeMIPGapPercent(true, incumbentValue):-ONE;
                 long numLeafsReamining = tree.numActiveLeafsAfterSimpleSolve;
                 long numLeafsReaminingLP = tree.numActiveLeafsWithGoodLPAfterSimpleSolve;
@@ -376,7 +380,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts {
         //other partitions   are already the created , namely activeSubtreeCollectionList  
         
         //we allow upto 100 more iterations to see if a partition completes
-        int maxIterationsAllowedWithIndividualLeafs = HUNDRED +iterationNumber;
+        int maxIterationsAllowedWithIndividualLeafs = Math.min(TWO*iterationNumber , iterationNumber + TEN*TWO);//+ HUNDRED ;
             
         List<ActiveSubtreeCollection> activeSubtreeCollectionList =null;
         ActiveSubtree homePartitionActiveSubTree = null;
@@ -459,17 +463,21 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts {
                     logger.debug (" incumbent was updated to " + incumbentValue);
                 }
 
-                //if any partition is done, we stop the iterations
+                //if every partition is done, we stop the iterations
+                greenFlagForIterations = false;
                 if (homePartitionActiveSubTree.isUnFeasible()|| homePartitionActiveSubTree.isOptimal()) {
-                    greenFlagForIterations = false;
-                }else{
+                     
                     //check all the other partitions
                     for (int partitionNumber = ONE;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){   
                         if (activeSubtreeCollectionList.get(partitionNumber-ONE).getPendingRawNodeCount() + activeSubtreeCollectionList.get(partitionNumber-ONE).getNumTrees() ==ZERO) {
-                            greenFlagForIterations = false;
                             logger.info("This partition has no trees or raw nodes reamining: " + partitionNumber);
+                        } else {
+                            greenFlagForIterations = true;
+                            break;
                         }
                     }
+                } else {
+                    greenFlagForIterations = true;
                 }
 
                 //do another iteration involving every partition
@@ -527,7 +535,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_b2c1s1_100parts {
          
         return file.exists();
     }
-        
+    
     private static boolean isLogFolderEmpty() {
         File dir = new File (LOG_FOLDER );
         return (dir.isDirectory() && dir.list().length==ZERO);

@@ -30,7 +30,7 @@ public class PruneBranchHandler extends IloCplex.BranchCallback {
     private static Logger logger=Logger.getLogger(PruneBranchHandler.class);
          
     //list of nodes to be pruned
-    public List<String> pruneList = new ArrayList<String>();
+    public List<String> pruneList  ;
     
     public double bestReamining_LPValue = IS_MAXIMIZATION ? MINUS_INFINITY : PLUS_INFINITY;
     
@@ -52,10 +52,10 @@ public class PruneBranchHandler extends IloCplex.BranchCallback {
     }
  
     protected void main() throws IloException {
-        if (pruneList!=null){
+        if (pruneList!=null && pruneList.size()>ZERO){
             if (  pruneList.contains( getNodeId().toString()) ) {
                 pruneList.remove(  getNodeId().toString() );
-                //logger.debug(getNodeId().toString() + " reamaining size "+pruneList.size()) ;
+                //logger.debug("Pruning migrated node" + getNodeId().toString() + " prine list reamaining size "+pruneList.size()) ;
                 prune();
             } 
         }

@@ -38,34 +38,40 @@ import org.apache.log4j.*;
  * sub problems created using variable bound merging, and solved using traditional branch and bound
  * 2 ramp ups, one for using CCA and one without CCA
  */
-public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
+public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_100parts_full_withcb {
     
     private static  Logger logger = null;
     
     private static  int NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION = ZERO;
     
     //  50(20), 100(40) , 200(90), 250(112) parts is ok
-    /*
+     
     public static   String MIP_NAME_UNDER_TEST = "glass4";    
-    public static   double MIP_WELLKNOWN_SOLUTION = 1200012600 ;
+    public static   double MIP_WELLKNOWN_SOLUTION =  1200012600 ;
     public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 100000;
-    */
+     
  
-    private static  int NUM_PARTITIONS = 50;
+    private static  int NUM_PARTITIONS = 200;
     private static double EXPECTED_LEAFS_PER_PARTITION = (RAMP_UP_TO_THIS_MANY_LEAFS +DOUBLE_ZERO)/NUM_PARTITIONS;
     
     //private static final int SOLUTION_CYCLE_Tu           fgggd hjhhIME_MINUTES = THREE;
      
     public static void main(String[] args) throws Exception {
+        
+        if (! isLogFolderEmpty()) {
+            System.err.println("\n\n\nClear the log folder before starting the test.");
+            exit(ONE);
+        }
             
-        logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts.class);
+        logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test_glass4_100parts_full_withcb.class);
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts.class.getSimpleName()+ LOG_FILE_EXTENSION);
+            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCATraditional_SimulatedCluster_Test_glass4_100parts_full_withcb.class.getSimpleName()+ LOG_FILE_EXTENSION);
             rfa.setMaxBackupIndex(TEN*TEN);
             logger.addAppender(rfa);
             logger.setAdditivity(false);
+           
             
         } catch (Exception ex) {
             System.err.println("Exit: unable to initialize logging");        
@@ -86,6 +92,9 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
         activeSubtreeBEF.solve( RAMP_UP_TO_THIS_MANY_LEAFS, PLUS_INFINITY, MILLION, true, false); 
         ActiveSubtree activeSubtreeLSI = new ActiveSubtree () ;
         activeSubtreeLSI.solve( RAMP_UP_TO_THIS_MANY_LEAFS, PLUS_INFINITY, MILLION, true, false); 
+        //another ramp up for CB
+        ActiveSubtree activeSubtreeCB = new ActiveSubtree () ;
+        activeSubtreeCB.solve( RAMP_UP_TO_THIS_MANY_LEAFS, PLUS_INFINITY, MILLION, true, false); 
         
         //verify activeSubtreeONE and activeSubtreeTWO identical ramp up
         logger.debug ("verify activeSubtreeONE and activeSubtreeTWO identical ramp up") ;   
@@ -94,6 +103,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
         List<String> nodeCreationInfoListSBF = activeSubtreeSBF.getNodeCreationInfoList();
         List<String> nodeCreationInfoListBEF = activeSubtreeBEF.getNodeCreationInfoList();
         List<String> nodeCreationInfoListLSI = activeSubtreeLSI.getNodeCreationInfoList();
+        List<String> nodeCreationInfoListCB = activeSubtreeCB.getNodeCreationInfoList();
         if (activeSubtreeONE.getMaxBranchingVars()!= activeSubtreeSBF.getMaxBranchingVars() || 
                nodeCreationInfoListONE.size()!= nodeCreationInfoListSBF.size()){
             logger.error ("ramp up not identical");
@@ -108,7 +118,13 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
                nodeCreationInfoListONE.size()!= nodeCreationInfoListLSI.size()){
             logger.error ("ramp up not identical");
             exit(ONE);
+        }        
+        if (activeSubtreeONE.getMaxBranchingVars()!= activeSubtreeCB.getMaxBranchingVars() || 
+               nodeCreationInfoListONE.size()!= nodeCreationInfoListCB.size()){
+            logger.error ("ramp up not identical");
+            exit(ONE);
         }
+        
         
         //code needs cleanup!
         
@@ -125,12 +141,17 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
                 logger.error ("ramp up not identical - branching conditions vary");
                 exit(ONE);
             }
+            if (! nodeCreationInfoListONE.get(index).equals(nodeCreationInfoListCB.get(index) )) {
+                logger.error ("ramp up not identical - branching conditions vary");
+                exit(ONE);
+            }
         }
         
         List<NodeAttachment> activeLeaflistONE = activeSubtreeONE.getActiveLeafList();
         List<NodeAttachment> activeLeaflistSBF = activeSubtreeSBF.getActiveLeafList();
         List<NodeAttachment> activeLeaflistBEF = activeSubtreeBEF.getActiveLeafList();
         List<NodeAttachment> activeLeaflistLSI = activeSubtreeLSI.getActiveLeafList();
+        List<NodeAttachment> activeLeaflistCB = activeSubtreeCB.getActiveLeafList();
         if (activeLeaflistONE.size()!=activeLeaflistSBF.size()){
             logger.error ("ramp up not identical - active leaf counts vary");
             exit(ONE);
@@ -140,6 +161,10 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
             exit(ONE);
         }
         if (activeLeaflistONE.size()!=activeLeaflistLSI.size()){
+            logger.error ("ramp up not identical - active leaf counts vary");
+            exit(ONE);
+        }
+        if (activeLeaflistONE.size()!=activeLeaflistCB.size()){
             logger.error ("ramp up not identical - active leaf counts vary");
             exit(ONE);
         }
@@ -156,14 +181,19 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
                 logger.error ("ramp up not identical - active leaf ids vary");
                 exit(ONE);
             }
+            if (! activeLeaflistCB.get(index).nodeID.equals(activeLeaflistONE.get(index).nodeID )){
+                logger.error ("ramp up not identical - active leaf ids vary");
+                exit(ONE);
+            }
         }
         
         
         logger.info("Ramp ups are identical, can proceed");
-        
-        
+         
         //now extract CCA nodes from ramped up tree
         List<CCANode> acceptedCCANodes =new ArrayList<CCANode> () ;
+        //here are the CB instructions for the accepted CCA nodes
+        List< CBInstructionTree> acceptedCCANodeInstructionTrees  =new ArrayList<CBInstructionTree > () ;                   
         int leafCountRemainingInHomePartition = (int) activeSubtreeONE.getActiveLeafCount();
           
         // we convert each accepted CCA node into an active subtree collection, for use in the second part of the test
@@ -175,6 +205,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
         List<String> pruneListSBF = new ArrayList<String>();
         List<String> pruneListBEF = new ArrayList<String>();
         List<String> pruneListLSI = new ArrayList<String>();
+        List<String> pruneListCB  = new ArrayList<String>();
         
         //get CCA condidates
         //List<CCANode> candidateCCANodes = activeSubtreeONE.getCandidateCCANodes( LEAFS_PER_CCA );             
@@ -196,6 +227,12 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
                 NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION ++;
                 //          qxxy               dod       
                 acceptedCCANodes.add(ccaNode);
+                
+                //get the CB instructions for each accepted CCA node
+                CBInstructionTree tree = activeSubtreeONE.getCBInstructionTree(ccaNode);
+                acceptedCCANodeInstructionTrees.add( tree); 
+                tree.print();
+                
 
                 //add entry to  active Subtree Collection
                 List<CCANode> ccaLeafNodeListSBF = activeSubtreeONE.getActiveLeafsAsCCANodes( ccaNode.pruneList);      
@@ -214,21 +251,23 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
                 activeSubtreeCollectionListLSI .add(astc);
 
                 //prune leafs from active subtree
-                activeSubtreeONE.prune( ccaNode.pruneList, true);
+                //activeSubtreeONE.prune( ccaNode.pruneList, true);
                 //prune the same leafs from the clone active subtree
                 //activeSubtreeSBF.prune( ccaNode.pruneList, true);
                 //activeSubtreeBEF.prune( ccaNode.pruneList, true);
-               // activeSubtreeLSI.prune( ccaNode.pruneList, true);
+                // activeSubtreeLSI.prune( ccaNode.pruneList, true);
                 //since we are changing the branch handler, I am supplying the prune list to the new branch handler. This is not how it was initially supposed to be.
                 pruneListONE.addAll( ccaNode.pruneList);
                 pruneListSBF.addAll( ccaNode.pruneList);
                 pruneListBEF.addAll( ccaNode.pruneList);
                 pruneListLSI.addAll( ccaNode.pruneList);
+                pruneListCB.addAll ( ccaNode.pruneList);
 
             }   
             if (NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION >=NUM_PARTITIONS-1 )             break; //leave 1 node on home partition
 
         }
+        activeSubtreeONE.prune(pruneListONE , true);
         leafCountRemainingInHomePartition = (int) activeSubtreeONE.getActiveLeafCount();
          
         
@@ -269,7 +308,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
         
         //init the best known solution value and vector which will be updated as the solution progresses
         //Initialize them to values after ramp up
-        SolutionVector  bestKnownSolution = bestKnownSolutionAfterRampup ==null? null : activeSubtreeONE.getSolutionVector();
+        //SolutionVector  bestKnownSolution = bestKnownSolutionAfterRampup ==null? null : activeSubtreeONE.getSolutionVector();
         double  incumbentValue= incumbentValueAfterRampup;
          
          
@@ -283,6 +322,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
         //note that we have the home partition plus as many CCA nodes as we have accepted for migration
         NUM_PARTITIONS= NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION + ONE;
         List<ActiveSubtree> partitionList = new ArrayList<ActiveSubtree> (NUM_PARTITIONS);
+        
         partitionList.add(activeSubtreeONE  ); //home MIP
         //
         //now add the farmed out CCA nodes
@@ -301,14 +341,20 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
             //solve every partition for 3 minutes at a time
             for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){                                
                 logger.debug("Solving partition for "+SOLUTION_CYCLE_TIME_MINUTES+" minutes ... Partition_" + partitionNumber );
+                if (partitionNumber == ZERO ) logger.debug(" prune list size before is "+ pruneListONE.size());
                 partitionList.get(partitionNumber).simpleSolve( SOLUTION_CYCLE_TIME_MINUTES ,  true,  false, partitionNumber == ZERO ? pruneListONE: null);                
+                if (partitionNumber == ZERO ) logger.debug(" prune list size after is "+ pruneListONE.size());
             }
             
-            //we are done when 1 partition has no active leafs left, i.e. its optimal or unfeasible
+            //we are done when every partition has no active leafs left, i.e. its optimal or unfeasible
+            greenFlagForIterations=false;
             for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){
-                if (partitionList.get(partitionNumber).isUnFeasible() || partitionList.get(partitionNumber).isOptimal()) {
-                    logger.debug("partition "+ partitionNumber + " solved. Stopping iterations at " + iterationNumber);
-                    greenFlagForIterations=false;
+                if (!partitionList.get(partitionNumber).isUnFeasible() && !partitionList.get(partitionNumber).isOptimal()) {
+                    //logger.debug("partition "+ partitionNumber + " solved. Stopping iterations at " + iterationNumber);
+                    greenFlagForIterations=true;
+                    break;
+                } else {
+                    logger.debug("partition "+ partitionNumber + " solved." + " Status is " +  partitionList.get(partitionNumber).getStatus());
                 }
             }
                          
@@ -320,7 +366,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
             
                 if   ( tree.isFeasible()||tree.isOptimal())  {
                     if (  (!IS_MAXIMIZATION  && incumbentValue> tree.getObjectiveValue())  || (IS_MAXIMIZATION && incumbentValue< tree.getObjectiveValue()) ) {     
-                        bestKnownSolution =              tree.getSolutionVector();
+                        //bestKnownSolution =              tree.getSolutionVector();
                         incumbentValue =  tree.getObjectiveValue();
                         partitionWithIncumbentUpdate= partitionNumber;
                     }
@@ -347,7 +393,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
                 ActiveSubtree tree = partitionList.get(partitionNumber);
                 
                 double localMipGapPercent = (tree.isFeasible()||tree.isOptimal()) ? tree.getRelativeMIPGapPercent(false, -ONE):-ONE;
-                double globalMipGapPercent = (tree.isFeasible()||tree.isOptimal()) && (incumbentValue < PLUS_INFINITY && incumbentValue > MINUS_INFINITY)?
+                double globalMipGapPercent = (incumbentValue < PLUS_INFINITY && incumbentValue > MINUS_INFINITY)?
                                               tree.getRelativeMIPGapPercent(true, incumbentValue):-ONE;
                 long numLeafsReamining = tree.numActiveLeafsAfterSimpleSolve;
                 long numLeafsReaminingLP = tree.numActiveLeafsWithGoodLPAfterSimpleSolve;
@@ -363,15 +409,125 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
                 tree.end();
         }
         
-         
+          
+        //test 1A, with CB
+        //everything same as CCA, but 1st iteration does reincarnation
+        // 
+        //we allow upto 100 more iterations to see if a partition completes
+        final int maxIterationsAllowedWithIndividualLeafs =  Math.min(TWO*iterationNumber , iterationNumber + TEN*TWO);//+ HUNDRED ;
+        //re-init incumbentValue to incumbentValueAfterRampup;
+        incumbentValue= incumbentValueAfterRampup;
+        iterationNumber=ZERO;
+        greenFlagForIterations = true;
+        //create 1 tree per partition
+        //note that we have the home partition plus as many CCA nodes as we have accepted for migration
+        partitionList = new ArrayList<ActiveSubtree> (NUM_PARTITIONS);
+        partitionList.add(activeSubtreeCB  ); //home MIP
+        //
+        //now add the farmed out CCA nodes
+        for (CCANode ccaNode :acceptedCCANodes ){
+            ActiveSubtree treeStraight = new ActiveSubtree() ;
+            treeStraight.mergeVarBounds(ccaNode, activeSubtreeONE.instructionsFromOriginalMip, false );
+            if (bestKnownSolutionAfterRampup!=null) treeStraight.setCutoffValue(incumbentValueAfterRampup ); //setMIPStart(bestKnownSolution);
+            partitionList.add(treeStraight);
+        }
+        
+        for (; greenFlagForIterations && iterationNumber<maxIterationsAllowedWithIndividualLeafs;iterationNumber++){ //while green flag, i.e. while no partition is complete
+            
+            if(isHaltFilePresent())  break; //halt!
+            logger.debug("starting iteration Number "+iterationNumber);
+                    
+            //solve every partition for 3 minutes at a time
+            for (int partitionNumber = NUM_PARTITIONS-ONE;partitionNumber >= ZERO; partitionNumber-- ){                                
+                logger.debug("Solving partition for "+SOLUTION_CYCLE_TIME_MINUTES+" minutes ... Partition_" + partitionNumber );
+                if (partitionNumber == ZERO ) {
+                    logger.debug(" prune list size before is "+ pruneListCB.size());
+                    partitionList.get(partitionNumber).simpleSolve( SOLUTION_CYCLE_TIME_MINUTES ,  true,  false,  pruneListCB );    
+                    logger.debug(" prune list size after is "+ pruneListCB.size());
+                }else {
+                    if (iterationNumber!=ZERO){
+                        //just solve
+                        partitionList.get(partitionNumber).simpleSolve( SOLUTION_CYCLE_TIME_MINUTES ,  true,  false,  null);
+                    }else {
+                        // reincarnate with CB
+                        CBInstructionTree tree =acceptedCCANodeInstructionTrees.get(partitionNumber-ONE);
+                        partitionList.get(partitionNumber).reincarnate( tree.asMap(),acceptedCCANodes.get(partitionNumber-ONE).nodeID  , 
+                                PLUS_INFINITY , false);
+                        logger.debug("Reincarnated partition " + partitionNumber + " with CCA seed " + acceptedCCANodes.get(partitionNumber-ONE).nodeID +
+                                " has this many leafs " + partitionList.get(partitionNumber).getActiveLeafCount());
+                    }   
+                }
+            }
+            
+            //we are done when every partition has no active leafs left, i.e. its optimal or unfeasible
+            greenFlagForIterations=false;
+            for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){
+                if (!partitionList.get(partitionNumber).isUnFeasible() && !partitionList.get(partitionNumber).isOptimal()) {
+                    //logger.debug("partition "+ partitionNumber + " solved. Stopping iterations at " + iterationNumber);
+                    greenFlagForIterations=true;
+                    break;
+                } else {
+                    logger.debug("partition "+ partitionNumber + " solved." + " Status is " +  partitionList.get(partitionNumber).getStatus());
+                }
+            }
+                         
+            //if better solution found on any partition, update incumbent, and supply MIP start to every partition
+            int partitionWithIncumbentUpdate = -ONE;
+            for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){
+                
+                ActiveSubtree tree = partitionList.get(partitionNumber);
+            
+                if   ( tree.isFeasible()||tree.isOptimal())  {
+                    if (  (!IS_MAXIMIZATION  && incumbentValue> tree.getObjectiveValue())  || (IS_MAXIMIZATION && incumbentValue< tree.getObjectiveValue()) ) {     
+                        //bestKnownSolution =              tree.getSolutionVector();
+                        incumbentValue =  tree.getObjectiveValue();
+                        partitionWithIncumbentUpdate= partitionNumber;
+                    }
+                }
+            }
+            //update the MIP start if needed
+            if (partitionWithIncumbentUpdate>=ZERO){
+                for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){
+                                     
+                    if (partitionNumber==partitionWithIncumbentUpdate) continue;
+                    partitionList.get(partitionNumber).setCutoffValue(incumbentValue);//   setMIPStart(bestKnownSolution );
+                }
+                logger.debug (" incumbent was updated to " + incumbentValue);
+            }
+            
+            //do another iteration involving every partition
+            
+        }//for greenFlagForIterations
+        
+        logger.debug(" CB test ended at iteration Number "+iterationNumber);
+        //for every partition , print mip gap and # of leafs reamining, then end every partition
+        for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){
+                
+                ActiveSubtree tree = partitionList.get(partitionNumber);
+                
+                double localMipGapPercent = (tree.isFeasible()||tree.isOptimal()) ? tree.getRelativeMIPGapPercent(false, -ONE):-ONE;
+                double globalMipGapPercent = (incumbentValue < PLUS_INFINITY && incumbentValue > MINUS_INFINITY)?
+                                              tree.getRelativeMIPGapPercent(true, incumbentValue):-ONE;
+                long numLeafsReamining = tree.numActiveLeafsAfterSimpleSolve;
+                long numLeafsReaminingLP = tree.numActiveLeafsWithGoodLPAfterSimpleSolve;
+                
+                //this is the seed CCA on this partition, home partition is of course seeded by 0
+                String ccaSeedNodeID = ""+ZERO;
+                if (partitionNumber != ZERO){
+                    ccaSeedNodeID = tree.seedCCANodeID;
+                } 
+                logger.debug ("partition "+partitionNumber + "  has local mipgap " + localMipGapPercent + " global mipgap " + globalMipGapPercent +
+                        " and #leafs " + numLeafsReamining + " and good lp #leafs " + numLeafsReaminingLP + 
+                        " and was seeded by CCA node " + ccaSeedNodeID  + " and has status "+tree.getStatus());
+                tree.end();
+        }
+               
         
         //HERE is part 2 of the test, where we run individual leafs and compare results with CCA
         //Note that the home partition continues to be a single tree, although the clone is used because the original home partition has already been solved
         //other partitions   are already the created , namely activeSubtreeCollectionList  
         
-        //we allow upto 100 more iterations to see if a partition completes
-        int maxIterationsAllowedWithIndividualLeafs = HUNDRED +iterationNumber;
-            
+           
         List<ActiveSubtreeCollection> activeSubtreeCollectionList =null;
         ActiveSubtree homePartitionActiveSubTree = null;
         List<String> pruneList=null;
@@ -453,17 +609,21 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
                     logger.debug (" incumbent was updated to " + incumbentValue);
                 }
 
-                //if any partition is done, we stop the iterations
+                //if every partition is done, we stop the iterations
+                greenFlagForIterations = false;
                 if (homePartitionActiveSubTree.isUnFeasible()|| homePartitionActiveSubTree.isOptimal()) {
-                    greenFlagForIterations = false;
-                }else{
+                     
                     //check all the other partitions
                     for (int partitionNumber = ONE;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){   
                         if (activeSubtreeCollectionList.get(partitionNumber-ONE).getPendingRawNodeCount() + activeSubtreeCollectionList.get(partitionNumber-ONE).getNumTrees() ==ZERO) {
-                            greenFlagForIterations = false;
                             logger.info("This partition has no trees or raw nodes reamining: " + partitionNumber);
+                        } else {
+                            greenFlagForIterations = true;
+                            break;
                         }
                     }
+                } else {
+                    greenFlagForIterations = true;
                 }
 
                 //do another iteration involving every partition
@@ -521,5 +681,11 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_glass4_23parts {
          
         return file.exists();
     }
+    
+    private static boolean isLogFolderEmpty() {
+        File dir = new File (LOG_FOLDER );
+        return (dir.isDirectory() && dir.list().length==ZERO);
+    }
 }
+
 

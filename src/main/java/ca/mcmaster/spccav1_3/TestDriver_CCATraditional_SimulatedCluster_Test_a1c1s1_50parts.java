@@ -57,6 +57,11 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_50parts {
     //private static final int SOLUTION_CYCLE_Tu           fgggd hjhhIME_MINUTES = THREE;
      
     public static void main(String[] args) throws Exception {
+        
+        if (! isLogFolderEmpty()) {
+            System.err.println("\n\n\nClear the log folder before starting the test.");
+            exit(ONE);
+        }
             
         logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_50parts.class);
         logger.setLevel(Level.DEBUG);
@@ -347,7 +352,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_50parts {
                 ActiveSubtree tree = partitionList.get(partitionNumber);
                 
                 double localMipGapPercent = (tree.isFeasible()||tree.isOptimal()) ? tree.getRelativeMIPGapPercent(false, -ONE):-ONE;
-                double globalMipGapPercent = (tree.isFeasible()||tree.isOptimal()) && (incumbentValue < PLUS_INFINITY && incumbentValue > MINUS_INFINITY)?
+                double globalMipGapPercent =   (incumbentValue < PLUS_INFINITY && incumbentValue > MINUS_INFINITY)?
                                               tree.getRelativeMIPGapPercent(true, incumbentValue):-ONE;
                 long numLeafsReamining = tree.numActiveLeafsAfterSimpleSolve;
                 long numLeafsReaminingLP = tree.numActiveLeafsWithGoodLPAfterSimpleSolve;
@@ -520,6 +525,11 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_50parts {
         File file = new File("F:\\temporary files here\\haltfile.txt");
          
         return file.exists();
+    }
+    
+    private static boolean isLogFolderEmpty() {
+        File dir = new File (LOG_FOLDER );
+        return (dir.isDirectory() && dir.list().length==ZERO);
     }
 }
 

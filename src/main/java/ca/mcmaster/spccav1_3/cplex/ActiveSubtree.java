@@ -220,7 +220,10 @@ public class ActiveSubtree {
     public void simpleSolve(double timeLimitMinutes, boolean useEmptyCallback, boolean useInMemory, List<String> pruneList) throws IloException{
         logger.debug("simpleSolve Started at "+LocalDateTime.now()) ;
         cplex.clearCallbacks();
-        if (useEmptyCallback) this.cplex.use(new PruneBranchHandler( pruneList));  
+        if (useEmptyCallback) {
+            this.cplex.use(new PruneBranchHandler( pruneList));
+            //this.cplex.use(new PruneNodeHandler( pruneList));
+        }  
         setParams (  timeLimitMinutes, useInMemory);
         cplex.solve();
         
@@ -295,6 +298,8 @@ public class ActiveSubtree {
     //this method is used when reincarnating a tree in a controlled fashion
     //similar to solve(), but we use controlled branching instead of CPLEX default branching
     public    void reincarnate ( Map<String, CCANode> instructionTreeAsMap, String ccaRootNodeID, double cutoff, boolean setCutoff) throws IloException{
+        
+        logger.debug("Reincarnating tree with cca root node id "+ ccaRootNodeID);
         
         //reset CCA finder
         this.ccaFinder.close();
