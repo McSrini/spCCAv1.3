@@ -244,7 +244,7 @@ public class CCAFinder {
                 }
             }
             
-            logger.debug("maxRefCount " + maxRefCount + " at Index "+ indexOfMax + " " + subtreeRootList.get(indexOfMax).ccaInformation.refCountLeft + " + "+subtreeRootList.get(indexOfMax).ccaInformation.refCountRight );
+            //logger.debug("maxRefCount " + maxRefCount + " at Index "+ indexOfMax + " " + subtreeRootList.get(indexOfMax).ccaInformation.refCountLeft + " + "+subtreeRootList.get(indexOfMax).ccaInformation.refCountRight );
             if (indexOfMax< ZERO){
                 //this partitioning cannot be done
                 logger.error("this splitToCCAPostRampup partitioning cannot be done  , try ramping up to  a larger number of leafs ");

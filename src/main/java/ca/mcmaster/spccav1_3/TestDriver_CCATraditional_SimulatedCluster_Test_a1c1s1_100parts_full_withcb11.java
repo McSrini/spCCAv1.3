@@ -45,10 +45,21 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
     private static  int NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION = ZERO;
     
     //  50(20), 100(40) , 200(90), 250(112) parts is ok
+    
+    //wnq-n100-mw99-14  ru=5000, pa=100  size >= 50/4 yeilds 85 candidates with home=42   fast
+    //b2c1s1 ru=5000, pa=100  size >= 50/3 yeilds 94 candidates with home=48
+    //seymour-disj-10 ru=5000, pa=100  size >= 50/4 yeilds 68 candidates with home=74
+    //usAbbrv-8-25_70 ru=10000, pa=100  size >= 50/4 yeilds 96 candidates with home=77
+    //neos-847302 ru=10000, pa=100  size >= 50/4 yeilds 94 candidates with home=50
+    //
+    //seymour ru=8000, pa=100  size >= 50/4 yeilds 99 candidates with home=40
+    //rococoB10-011000 ru=5000, pa=100  size >= 50/4 yeilds 95 candidates with home=19
+    //  momentum1  ru=5000, pa=100  size >= 50/4 yeilds 90 candidates with home=88
+    
      
-    public static   String MIP_NAME_UNDER_TEST ="a1c1s1";
-    public static   double MIP_WELLKNOWN_SOLUTION =  11503.444125;
-    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 10000;
+    public static   String MIP_NAME_UNDER_TEST ="momentum1";
+    public static   double MIP_WELLKNOWN_SOLUTION =  25687.9;
+    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 5000;
      
  
     private static  int NUM_PARTITIONS = 100;
@@ -193,7 +204,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         //now extract CCA nodes from ramped up tree
         List<CCANode> acceptedCCANodes =new ArrayList<CCANode> () ;
         //here are the CB instructions for the accepted CCA nodes
-        List< CBInstructionTree> acceptedCCANodeInstructionTrees  =new ArrayList<CBInstructionTree > () ;                   
+        List< CBInstructionTree>  acceptedCCANodeInstructionTrees  =new ArrayList<CBInstructionTree > () ;                   
         int leafCountRemainingInHomePartition = (int) activeSubtreeONE.getActiveLeafCount();
           
         // we convert each accepted CCA node into an active subtree collection, for use in the second part of the test
@@ -221,7 +232,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         //active subtree collection needs to be formed before the leafs are "pruned"
         for (CCANode ccaNode: candidateCCANodes){
 
-            if (ccaNode.getPackingFactor() < TWO && ccaNode.pruneList.size() > EXPECTED_LEAFS_PER_PARTITION/TWO ) {
+            if (ccaNode.getPackingFactor() < TWO && ccaNode.pruneList.size() > EXPECTED_LEAFS_PER_PARTITION/FOUR ) {
                 logger.debug (""+ccaNode.nodeID + " has good packing factor " +ccaNode.getPackingFactor() + 
                         " and prune list size " + ccaNode.pruneList.size() + " depth from root "+ ccaNode.depthOfCCANodeBelowRoot) ; 
                 NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION ++;
