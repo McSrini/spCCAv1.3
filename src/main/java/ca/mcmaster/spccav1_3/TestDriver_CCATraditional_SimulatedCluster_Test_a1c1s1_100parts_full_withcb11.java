@@ -47,19 +47,21 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
     //  50(20), 100(40) , 200(90), 250(112) parts is ok
     
     //wnq-n100-mw99-14  ru=5000, pa=100  size >= 50/4 yeilds 85 candidates with home=42   fast
+    //p100x588b        ru=15000, pa=100  size >= 50/4 yeilds 97 candidates with home=53   fast
     //b2c1s1 ru=5000, pa=100  size >= 50/3 yeilds 94 candidates with home=48
     //seymour-disj-10 ru=5000, pa=100  size >= 50/4 yeilds 68 candidates with home=74
     //usAbbrv-8-25_70 ru=10000, pa=100  size >= 50/4 yeilds 96 candidates with home=77
     //neos-847302 ru=10000, pa=100  size >= 50/4 yeilds 94 candidates with home=50
+    //janos-us-DDM ru=8000, pa=100  size >= 50/4 yeilds 90 candidates with home=30  fast
     //
     //seymour ru=8000, pa=100  size >= 50/4 yeilds 99 candidates with home=40
     //rococoB10-011000 ru=5000, pa=100  size >= 50/4 yeilds 95 candidates with home=19
     //  momentum1  ru=5000, pa=100  size >= 50/4 yeilds 90 candidates with home=88
     
      
-    public static   String MIP_NAME_UNDER_TEST ="momentum1";
+    public static   String MIP_NAME_UNDER_TEST ="janos-us-DDM";
     public static   double MIP_WELLKNOWN_SOLUTION =  25687.9;
-    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 5000;
+    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 8000;
      
  
     private static  int NUM_PARTITIONS = 100;
