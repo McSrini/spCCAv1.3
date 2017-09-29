@@ -35,20 +35,29 @@ public class Constants {
     public static final String DELIMITER = "______";
     
     //public static  String MPS_FILE_ON_DISK =  "F:\\temporary files here\\rd-rplusc-21.mps";
-    public static  String MPS_FILE_ON_DISK =  "F:\\temporary files here\\atlanta-ip.mps";
-    public static final String LOG_FOLDER="F:\\temporary files here\\logs\\testing\\ccav1_3\\";
+    //public static  String MPS_FILE_ON_DISK =  "F:\\temporary files here\\atlanta-ip.mps"; windows
+    public static  String MPS_FILE_ON_DISK =  "p100x588b.mps";
+    //public static final String LOG_FOLDER="F:\\temporary files here\\logs\\testing\\ccav1_3\\";
+    public static final String LOG_FOLDER="logs/";
     public static final String LOG_FILE_EXTENSION = ".log";
+    
      
     public static final boolean IS_MAXIMIZATION = false;
      
     //CCA represents this many nodes
+    //ignore, unused in experiments
     public static    int NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE  =  6;     
     //remove after testing
-    //List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node25", "Node23", "Node24","Node13", "Node29", "Node30");      
+    //List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING =  Arrays.asList("Node25", "Node23", "Node24","Node13", "Node29", "Node30");     
+    
+    //unused, ignore
     public static  List<String> BAD_MIGRATION_CANDIDATES_DURING_TESTING = new ArrayList<String>(); // Arrays.asList("Node34",   "Node22", "Node13","Node28", "Node29", "Node30");      
     
+    //used to reject inferior LCA candidates
+    public static final double LCA_CANDIDATE_PACKING_FACTOR_LARGEST_ACCEPTABLE=1.2;
     
     //for testing, grow the tree this big
+    //ignore, not used in experiments
     public static  final int TOTAL_LEAFS_IN_SOLUTION_TREE_FOR_RAMPUP =  18 ;
     
     //CCA subtree allowed to have slightly less good leafs than asked for in NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE 
@@ -56,11 +65,12 @@ public class Constants {
     public static  double CCA_PACKING_FACTOR_MAXIMUM_ALLOWED =  0.0;
     
     //for testing
+    //ignore, not used in experiments
     public static   boolean BackTrack = true;
     
-    public static   int TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE = 6 ;    
+    public static   int TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE = 2 ;    
     public static   double MINIMUM_TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE = 0.5 ;//30 seconds
-    public static final int SOLUTION_CYCLE_TIME_MINUTES = 12;
+    public static final int SOLUTION_CYCLE_TIME_MINUTES = 6;
     
     
 }

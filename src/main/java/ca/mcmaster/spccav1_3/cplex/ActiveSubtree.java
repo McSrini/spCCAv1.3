@@ -399,7 +399,10 @@ public class ActiveSubtree {
         
     //use this method to split the ramped-up tree into roughly equal partitions
     public List<CCANode> getCandidateCCANodesPostRampup (int numPartitions)   {
-        return ccaFinder.  getCandidateCCANodesPostRampup ( numPartitions);        
+        return getCandidateCCANodesPostRampup (  numPartitions, TWO)  ;
+    }
+    public List<CCANode> getCandidateCCANodesPostRampup (int numPartitions, final int MIN_REF_COUNT)   {
+        return ccaFinder.  getCandidateCCANodesPostRampup ( numPartitions, MIN_REF_COUNT);        
     }    
     
     

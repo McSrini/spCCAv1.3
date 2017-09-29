@@ -16,8 +16,12 @@ import ca.mcmaster.spccav1_3.cplex.NodeSelectionStartegyEnum;
 import static ca.mcmaster.spccav1_3.cplex.NodeSelectionStartegyEnum.STRICT_BEST_FIRST;
 import ca.mcmaster.spccav1_3.cplex.datatypes.NodeAttachment;
 import ca.mcmaster.spccav1_3.cplex.datatypes.SolutionVector;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import static java.lang.System.exit;
+import java.lang.management.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -58,33 +62,40 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
     //rococoB10-011000 ru=5000, pa=100  size >= 50/4 yeilds 95 candidates with home=19
     //  momentum1  ru=5000, pa=100  size >= 50/4 yeilds 90 candidates with home=88
     
+    //for big partition counts
+    //p100x588b ru=60000, NUM_PARTITIONS = 1150 , 550, 250 , sct = 6m, ts=2m, 12m:4m 12m:6m
      
-    public static   String MIP_NAME_UNDER_TEST ="janos-us-DDM";
-    public static   double MIP_WELLKNOWN_SOLUTION =  25687.9;
-    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 8000;
+    public static   String MIP_NAME_UNDER_TEST ="p100x588b";
+    public static   double MIP_WELLKNOWN_SOLUTION =  47878;
+    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 60000; 
+    
      
+    /*public static   String MIP_NAME_UNDER_TEST ="timtab1";
+    public static   double MIP_WELLKNOWN_SOLUTION =  764772;
+    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 2000; */
  
-    private static  int NUM_PARTITIONS = 100;
+    private static  int NUM_PARTITIONS =1150;
     private static double EXPECTED_LEAFS_PER_PARTITION = (RAMP_UP_TO_THIS_MANY_LEAFS +DOUBLE_ZERO)/NUM_PARTITIONS;
     
     //private static final int SOLUTION_CYCLE_Tu           fgggd hjhhIME_MINUTES = THREE;
      
     public static void main(String[] args) throws Exception {
-        
+       
         if (! isLogFolderEmpty()) {
-            System.err.println("\n\n\nClear the log folder before starting the test.");
+            System.err.println("\n\n\nClear the log folder before starting the test." + LOG_FOLDER);
             exit(ONE);
         }
             
         logger=Logger.getLogger(TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_full_withcb11.class);
         logger.setLevel(Level.DEBUG);
+        
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
             RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_full_withcb11.class.getSimpleName()+ LOG_FILE_EXTENSION);
+           
             rfa.setMaxBackupIndex(TEN*TEN);
             logger.addAppender(rfa);
             logger.setAdditivity(false);
-           
             
         } catch (Exception ex) {
             System.err.println("Exit: unable to initialize logging");        
@@ -92,7 +103,10 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         }
          
         //first run 4 identical ramp ups
-        MPS_FILE_ON_DISK =  "F:\\temporary files here\\"+MIP_NAME_UNDER_TEST+".mps";
+        // MPS_FILE_ON_DISK =  "F:\\temporary files here\\"+MIP_NAME_UNDER_TEST+".mps"; windows
+        MPS_FILE_ON_DISK =   MIP_NAME_UNDER_TEST +".mps";
+        
+        
         BackTrack=false;
         BAD_MIGRATION_CANDIDATES_DURING_TESTING = new ArrayList<String>();
         logger.debug ("starting ramp up") ;  
@@ -222,7 +236,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         
         //get CCA condidates
         //List<CCANode> candidateCCANodes = activeSubtreeONE.getCandidateCCANodes( LEAFS_PER_CCA );             
-        List<CCANode> candidateCCANodes = activeSubtreeONE.getCandidateCCANodesPostRampup(NUM_PARTITIONS);    
+        List<CCANode> candidateCCANodes = activeSubtreeONE.getCandidateCCANodesPostRampup(NUM_PARTITIONS);
         
         if (candidateCCANodes.size() < NUM_PARTITIONS) {
             logger.error("this splitToCCAPostRampup partitioning cannot be done  , try ramping up to  a larger number of leafs ");
@@ -232,14 +246,19 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         //for every accepted CCA node, we create a active subtree collection that has all its leafs
         //
         //active subtree collection needs to be formed before the leafs are "pruned"
+        
+        //see which candidates are good enough
+        long acceptedCandidateWithLowestNumOfLeafs = PLUS_INFINITY;
         for (CCANode ccaNode: candidateCCANodes){
 
-            if (ccaNode.getPackingFactor() < TWO && ccaNode.pruneList.size() > EXPECTED_LEAFS_PER_PARTITION/FOUR ) {
+            if (ccaNode.getPackingFactor() < LCA_CANDIDATE_PACKING_FACTOR_LARGEST_ACCEPTABLE && ccaNode.pruneList.size() > EXPECTED_LEAFS_PER_PARTITION/FOUR ) {
                 logger.debug (""+ccaNode.nodeID + " has good packing factor " +ccaNode.getPackingFactor() + 
                         " and prune list size " + ccaNode.pruneList.size() + " depth from root "+ ccaNode.depthOfCCANodeBelowRoot) ; 
                 NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION ++;
                 //          qxxy               dod       
                 acceptedCCANodes.add(ccaNode);
+                
+                acceptedCandidateWithLowestNumOfLeafs = Math.min(acceptedCandidateWithLowestNumOfLeafs,ccaNode.pruneList.size()  );
                 
                 //get the CB instructions for each accepted CCA node
                 CBInstructionTree tree = activeSubtreeONE.getCBInstructionTree(ccaNode);
@@ -286,7 +305,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         
         //at this point, we have farmed out CCA nodes, and also
         //have the corresponding subtree collections for comparision [ each subtree collection has all the leafs of the corresponding CCA]                 
-        logger.debug ("number of CCA nodes collected = "+acceptedCCANodes.size()) ;            
+        logger.debug ("number of CCA nodes collected = "+acceptedCCANodes.size() + " . The lowest number of leafs represented by a CCA node is "+ acceptedCandidateWithLowestNumOfLeafs) ;            
         for ( int index = ZERO; index <  acceptedCCANodes.size(); index++){
             logger.debug("accepted CCA node is : " + acceptedCCANodes.get(index)) ;
             logger.debug ("number of leafs in corresponding active subtree collection SBF is = " +     
@@ -329,12 +348,13 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         //the first test uses CCA , the second test will use raw leafs
         
         //TEST 1 : with CCA
-        int iterationNumber=ZERO;
+        int iterationNumber=ZERO;        
         boolean greenFlagForIterations = true;
         //create 1 tree per partition
         //note that we have the home partition plus as many CCA nodes as we have accepted for migration
         NUM_PARTITIONS= NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION + ONE;
         List<ActiveSubtree> partitionList = new ArrayList<ActiveSubtree> (NUM_PARTITIONS);
+        int numRemainingPartitions = NUM_PARTITIONS; //used for progress logging
         
         partitionList.add(activeSubtreeONE  ); //home MIP
         //
@@ -347,7 +367,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         }
         
         for (; greenFlagForIterations ;iterationNumber++){ //while green flag, i.e. while no partition is complete
-            
+               
             if(isHaltFilePresent())  break; //halt!
             logger.debug("starting iteration Number "+iterationNumber);
                     
@@ -365,8 +385,9 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
                 if (!partitionList.get(partitionNumber).isUnFeasible() && !partitionList.get(partitionNumber).isOptimal()) {
                     //logger.debug("partition "+ partitionNumber + " solved. Stopping iterations at " + iterationNumber);
                     greenFlagForIterations=true;
-                    break;
+                    
                 } else {
+                    numRemainingPartitions --;
                     logger.debug("partition "+ partitionNumber + " solved." + " Status is " +  partitionList.get(partitionNumber).getStatus());
                 }
             }
@@ -394,12 +415,15 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
                 }
                 logger.debug (" incumbent was updated to " + incumbentValue);
             }
+           
+            logger.debug ( "Number of reamining partitions is "+ numRemainingPartitions);
+            numRemainingPartitions=NUM_PARTITIONS;
             
             //do another iteration involving every partition
             
         }//for greenFlagForIterations
         
-        logger.debug(" CCA test ended at iteration Number "+iterationNumber);
+        logger.debug(" CCA test ended at iteration Number "+iterationNumber + " with incumbent "+incumbentValue);
         //for every partition , print mip gap and # of leafs reamining, then end every partition
         for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){
                 
@@ -427,9 +451,10 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         //everything same as CCA, but 1st iteration does reincarnation
         // 
         //we allow upto 100 more iterations to see if a partition completes
-        final int maxIterationsAllowedWithIndividualLeafs =  Math.min(TWO*iterationNumber , iterationNumber + TEN*TWO);//+ HUNDRED ;
+        final int maxIterationsAllowedWithIndividualLeafs =    iterationNumber + TEN*TEN;//+ HUNDRED ;
         //re-init incumbentValue to incumbentValueAfterRampup;
         incumbentValue= incumbentValueAfterRampup;
+        numRemainingPartitions= NUM_PARTITIONS; //used for progress logging
         iterationNumber=ZERO;
         greenFlagForIterations = true;
         //create 1 tree per partition
@@ -478,8 +503,9 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
                 if (!partitionList.get(partitionNumber).isUnFeasible() && !partitionList.get(partitionNumber).isOptimal()) {
                     //logger.debug("partition "+ partitionNumber + " solved. Stopping iterations at " + iterationNumber);
                     greenFlagForIterations=true;
-                    break;
+                    //break;
                 } else {
+                    numRemainingPartitions--;
                     logger.debug("partition "+ partitionNumber + " solved." + " Status is " +  partitionList.get(partitionNumber).getStatus());
                 }
             }
@@ -508,11 +534,14 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
                 logger.debug (" incumbent was updated to " + incumbentValue);
             }
             
+            logger.debug ( "Number of reamining partitions is "+ numRemainingPartitions);
+            numRemainingPartitions=NUM_PARTITIONS;
+            
             //do another iteration involving every partition
             
         }//for greenFlagForIterations
         
-        logger.debug(" CB test ended at iteration Number "+iterationNumber);
+        logger.debug(" CB test ended at iteration Number "+iterationNumber+ " with incumbent "+incumbentValue);
         //for every partition , print mip gap and # of leafs reamining, then end every partition
         for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){
                 
@@ -570,9 +599,10 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
             }
                         
             greenFlagForIterations = true;
+            numRemainingPartitions=NUM_PARTITIONS;//for logging progress
 
             for (iterationNumber=ZERO; greenFlagForIterations &&iterationNumber<maxIterationsAllowedWithIndividualLeafs; iterationNumber++){ //same # of iterations as test 1
-
+   
                 if(isHaltFilePresent())  break;//halt
                 logger.debug("starting test2 iteration Number "+iterationNumber);
 
@@ -625,25 +655,33 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
                 //if every partition is done, we stop the iterations
                 greenFlagForIterations = false;
                 if (homePartitionActiveSubTree.isUnFeasible()|| homePartitionActiveSubTree.isOptimal()) {
+                    
+                    numRemainingPartitions --;
+                    logger.info("This partition has no trees or raw nodes reamining: " + ZERO);
                      
-                    //check all the other partitions
-                    for (int partitionNumber = ONE;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){   
-                        if (activeSubtreeCollectionList.get(partitionNumber-ONE).getPendingRawNodeCount() + activeSubtreeCollectionList.get(partitionNumber-ONE).getNumTrees() ==ZERO) {
-                            logger.info("This partition has no trees or raw nodes reamining: " + partitionNumber);
-                        } else {
-                            greenFlagForIterations = true;
-                            break;
-                        }
-                    }
+
                 } else {
                     greenFlagForIterations = true;
                 }
+                //check all the other partitions
+                for (int partitionNumber = ONE;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){   
+                    if (activeSubtreeCollectionList.get(partitionNumber-ONE).getPendingRawNodeCount() + activeSubtreeCollectionList.get(partitionNumber-ONE).getNumTrees() ==ZERO) {
+                        logger.info("This partition has no trees or raw nodes reamining: " + partitionNumber);
+                        numRemainingPartitions --;
+                    } else {
+                        greenFlagForIterations = true;
+                        //break;
+                    }
+                }
 
+                logger.debug ( "Number of reamining partitions is "+ numRemainingPartitions);
+                numRemainingPartitions=NUM_PARTITIONS;
+            
                 //do another iteration involving every partition
 
             }//end - 100 more iters than test 1      
 
-            logger.debug(" Individual solve test ended at iteration Number "+iterationNumber);
+            logger.debug(" Individual solve test with "+ nodeSelectionStrategy +" ended at iteration Number "+iterationNumber+ " with incumbent "+incumbentValue);
             //print status of every partition
             for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){
 
@@ -699,6 +737,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         File dir = new File (LOG_FOLDER );
         return (dir.isDirectory() && dir.list().length==ZERO);
     }
+    
 }
 
 

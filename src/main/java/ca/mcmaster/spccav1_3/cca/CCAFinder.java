@@ -136,7 +136,7 @@ public class CCAFinder {
         return this.candidateCCANodes;
     }
      
-    public List<CCANode> getCandidateCCANodesPostRampup (int numPartitions) {
+    public List<CCANode> getCandidateCCANodesPostRampup (int numPartitions, final int MIN_REF_COUNT) {
         buildRefCounts();
         //printState(root);
                 
@@ -147,7 +147,7 @@ public class CCAFinder {
         List<NodeAttachment> subtreeRootList = new ArrayList<NodeAttachment>();               
         //start with the root, and find all the subtree roots for distribution
         subtreeRootList.add(root);
-        splitToCCAPostRampup(subtreeRootList, numPartitions);
+        splitToCCAPostRampup(subtreeRootList, numPartitions, MIN_REF_COUNT);
         
         //if we have subtree roots which have only one child, repeatedly move down  the child nodes till the child has 2 kids
         List<NodeAttachment> removalList = new ArrayList <NodeAttachment>();
@@ -222,7 +222,7 @@ public class CCAFinder {
     }
     
     //split biggest remaining subtree root into 2 pieces until number of pieces exceeds numPartitions
-    private void splitToCCAPostRampup(    List<NodeAttachment> subtreeRootList, int numPartitions){
+    private void splitToCCAPostRampup(    List<NodeAttachment> subtreeRootList, int numPartitions, final int MIN_REF_COUNT){
         if (subtreeRootList.size()< numPartitions){
             
             //pick the subtree root with the largest ref-count and split it into two
@@ -233,9 +233,9 @@ public class CCAFinder {
             for (int index = ZERO; index < subtreeRootList.size(); index ++){
                 NodeAttachment thisSubtreeRoot = subtreeRootList.get(index);
                 boolean isLeftEligible = thisSubtreeRoot.leftChildRef!=null && !thisSubtreeRoot.leftChildRef.isLeaf() && 
-                        (thisSubtreeRoot.leftChildRef.ccaInformation.refCountLeft+ thisSubtreeRoot.leftChildRef.ccaInformation.refCountRight >ONE);
+                        (thisSubtreeRoot.leftChildRef.ccaInformation.refCountLeft+ thisSubtreeRoot.leftChildRef.ccaInformation.refCountRight >=MIN_REF_COUNT);
                 boolean isRightEligible = thisSubtreeRoot.rightChildRef!=null && !thisSubtreeRoot.rightChildRef.isLeaf() &&
-                        (thisSubtreeRoot.rightChildRef.ccaInformation.refCountLeft+ thisSubtreeRoot.rightChildRef.ccaInformation.refCountRight >ONE);
+                        (thisSubtreeRoot.rightChildRef.ccaInformation.refCountLeft+ thisSubtreeRoot.rightChildRef.ccaInformation.refCountRight >=MIN_REF_COUNT);
                 if  (!isRightEligible && !isLeftEligible) continue;
                 if (thisSubtreeRoot.ccaInformation.refCountLeft + thisSubtreeRoot.ccaInformation.refCountRight > maxRefCount) {
                     maxRefCount=thisSubtreeRoot.ccaInformation.refCountLeft + thisSubtreeRoot.ccaInformation.refCountRight;
@@ -254,18 +254,18 @@ public class CCAFinder {
                 //split it into 2
                 subtreeRootList.remove(thisSubtreeRoot );
                 if (thisSubtreeRoot.leftChildRef!=null && !thisSubtreeRoot.leftChildRef.isLeaf()) {
-                    if (thisSubtreeRoot.leftChildRef.ccaInformation.refCountLeft +thisSubtreeRoot.leftChildRef.ccaInformation.refCountRight > ONE) 
+                    if (thisSubtreeRoot.leftChildRef.ccaInformation.refCountLeft +thisSubtreeRoot.leftChildRef.ccaInformation.refCountRight >= MIN_REF_COUNT) 
                         subtreeRootList.add(thisSubtreeRoot.leftChildRef);
                         logger.debug("addded left child having refcount" + thisSubtreeRoot.leftChildRef.ccaInformation.refCountLeft + " + "+thisSubtreeRoot.leftChildRef.ccaInformation.refCountRight) ;
                 }
                 if (thisSubtreeRoot.rightChildRef!=null&& !thisSubtreeRoot.rightChildRef.isLeaf()) {
-                    if (thisSubtreeRoot.rightChildRef.ccaInformation.refCountLeft + thisSubtreeRoot.rightChildRef.ccaInformation.refCountRight>ONE ) 
+                    if (thisSubtreeRoot.rightChildRef.ccaInformation.refCountLeft + thisSubtreeRoot.rightChildRef.ccaInformation.refCountRight>=MIN_REF_COUNT ) 
                         subtreeRootList.add(thisSubtreeRoot.rightChildRef);
                         logger.debug("addded right child having refcount" + thisSubtreeRoot.rightChildRef.ccaInformation.refCountLeft + " + " +thisSubtreeRoot.rightChildRef.ccaInformation.refCountRight) ;
                 }
 
                 //make a recursive call
-                splitToCCAPostRampup(     subtreeRootList,   numPartitions);
+                splitToCCAPostRampup(     subtreeRootList,   numPartitions, MIN_REF_COUNT);
             }
             
         }       
