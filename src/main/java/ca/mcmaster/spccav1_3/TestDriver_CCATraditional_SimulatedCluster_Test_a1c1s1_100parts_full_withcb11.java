@@ -64,11 +64,11 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
     
     //for big partition counts
     //
-    //had1 running p100x with 1000 with memcheck, had2 running p100x with 250 and 500
-    //had 3 running wnq with 250  with memcheck , had 4 running wnq with 250  with memcheck and 3minute slices
-    //had 5 runing p100x with 1000 with memcheck and 3 minute slices
+    //had1 running p100x with 1000 with memcheck and 2 min slices, had2 running p100x with   500 and memory and 2 min slices
+    //had 3 running wnq with 250  with memcheck and 2 min slices , had 4 running wnq with 250  with memcheck and 3minute slices
+    //had 5 runing p100x with 250 with memcheck with 2 min slices
     //
-    //p100x588b ru=60000, NUM_PARTITIONS = 1150 , 550, 250 , sct = 6m, ts=2m, 6m:3m 6m:1m
+    //p100x588b ru=60000, NUM_PARTITIONS = 1150 , 580, 250 , sct = 6m, ts=2m, 6m:3m 6m:1m
     //wnq-n100-mw99-14 ru=25000, NUM_PARTITIONS = 1150 , 550, 250 , sct = 6m, ts=2m, 6m:3m 6m:1m
     
      
@@ -81,7 +81,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
     public static   double MIP_WELLKNOWN_SOLUTION =  764772;
     public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 2000; */
  
-    private static  int NUM_PARTITIONS =1150;
+    private static  int NUM_PARTITIONS =580;
     private static double EXPECTED_LEAFS_PER_PARTITION = (RAMP_UP_TO_THIS_MANY_LEAFS +DOUBLE_ZERO)/NUM_PARTITIONS;
     
     //private static final int SOLUTION_CYCLE_Tu           fgggd hjhhIME_MINUTES = THREE;
