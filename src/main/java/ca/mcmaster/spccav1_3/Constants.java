@@ -35,10 +35,12 @@ public class Constants {
     public static final String DELIMITER = "______";
     
     //public static  String MPS_FILE_ON_DISK =  "F:\\temporary files here\\rd-rplusc-21.mps";
-    //public static  String MPS_FILE_ON_DISK =  "F:\\temporary files here\\atlanta-ip.mps"; windows
-    public static  String MPS_FILE_ON_DISK =  "p100x588b.mps";
-    //public static final String LOG_FOLDER="F:\\temporary files here\\logs\\testing\\ccav1_3\\";
-    public static final String LOG_FOLDER="logs/";
+    //public static  String MPS_FILE_ON_DISK =  "F:\\temporary files here\\atlanta-ip.mps"; //windows
+    public static  String MPS_FILE_ON_DISK =  "p100x588b.mps";  //linux
+    
+
+    //public static final String LOG_FOLDER="F:\\temporary files here\\logs\\testing\\ccav1_3\\"; //windows
+    public static final String LOG_FOLDER="logs/"; //linux
     public static final String LOG_FILE_EXTENSION = ".log";
     
      
@@ -68,9 +70,11 @@ public class Constants {
     //ignore, not used in experiments
     public static   boolean BackTrack = true;
     
-    public static   int TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE = 2 ;    
+    public static   int TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE = 3 ;    
     public static   double MINIMUM_TIME_SLICE_IN_MINUTES_PER_ACTIVE_SUBTREE = 0.5 ;//30 seconds
     public static final int SOLUTION_CYCLE_TIME_MINUTES = 6;
     
+    //used to skip CB test
+    public static final boolean SKIP_CB_FLAG = true;
     
 }

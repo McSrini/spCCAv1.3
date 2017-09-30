@@ -63,14 +63,21 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
     //  momentum1  ru=5000, pa=100  size >= 50/4 yeilds 90 candidates with home=88
     
     //for big partition counts
-    //p100x588b ru=60000, NUM_PARTITIONS = 1150 , 550, 250 , sct = 6m, ts=2m, 12m:4m 12m:6m
-     
-    public static   String MIP_NAME_UNDER_TEST ="p100x588b";
-    public static   double MIP_WELLKNOWN_SOLUTION =  47878;
-    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 60000; 
+    //
+    //had1 running p100x with 1000 with memcheck, had2 running p100x with 250 and 500
+    //had 3 running wnq with 250  with memcheck , had 4 running wnq with 250  with memcheck and 3minute slices
+    //had 5 runing p100x with 1000 with memcheck and 3 minute slices
+    //
+    //p100x588b ru=60000, NUM_PARTITIONS = 1150 , 550, 250 , sct = 6m, ts=2m, 6m:3m 6m:1m
+    //wnq-n100-mw99-14 ru=25000, NUM_PARTITIONS = 1150 , 550, 250 , sct = 6m, ts=2m, 6m:3m 6m:1m
     
      
-    /*public static   String MIP_NAME_UNDER_TEST ="timtab1";
+    public static   String MIP_NAME_UNDER_TEST ="p100x588b";
+    public static   double MIP_WELLKNOWN_SOLUTION =  47878 ;
+    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 60000;  
+    
+    /* 
+    public static   String MIP_NAME_UNDER_TEST ="timtab1";
     public static   double MIP_WELLKNOWN_SOLUTION =  764772;
     public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 2000; */
  
@@ -103,8 +110,8 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         }
          
         //first run 4 identical ramp ups
-        // MPS_FILE_ON_DISK =  "F:\\temporary files here\\"+MIP_NAME_UNDER_TEST+".mps"; windows
-        MPS_FILE_ON_DISK =   MIP_NAME_UNDER_TEST +".mps";
+        //MPS_FILE_ON_DISK =  "F:\\temporary files here\\"+MIP_NAME_UNDER_TEST+".mps"; //windows
+        MPS_FILE_ON_DISK =   MIP_NAME_UNDER_TEST +".mps";  //linux
         
         
         BackTrack=false;
@@ -451,12 +458,12 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         //everything same as CCA, but 1st iteration does reincarnation
         // 
         //we allow upto 100 more iterations to see if a partition completes
-        final int maxIterationsAllowedWithIndividualLeafs =    iterationNumber + TEN*TEN;//+ HUNDRED ;
+        final int maxIterationsAllowedWithIndividualLeafs =    iterationNumber + ZERO; // TEN*TEN;//+ HUNDRED ;
         //re-init incumbentValue to incumbentValueAfterRampup;
         incumbentValue= incumbentValueAfterRampup;
         numRemainingPartitions= NUM_PARTITIONS; //used for progress logging
         iterationNumber=ZERO;
-        greenFlagForIterations = true;
+        greenFlagForIterations = !SKIP_CB_FLAG; //SKIP CB
         //create 1 tree per partition
         //note that we have the home partition plus as many CCA nodes as we have accepted for migration
         partitionList = new ArrayList<ActiveSubtree> (NUM_PARTITIONS);
@@ -543,7 +550,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         
         logger.debug(" CB test ended at iteration Number "+iterationNumber+ " with incumbent "+incumbentValue);
         //for every partition , print mip gap and # of leafs reamining, then end every partition
-        for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS; partitionNumber++ ){
+        for (int partitionNumber = ZERO;partitionNumber < NUM_PARTITIONS &&!SKIP_CB_FLAG; partitionNumber++ ){
                 
                 ActiveSubtree tree = partitionList.get(partitionNumber);
                 
@@ -575,6 +582,9 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         List<String> pruneList=null;
         //repeat test for all node selection strategies
         for(NodeSelectionStartegyEnum nodeSelectionStrategy  :NodeSelectionStartegyEnum.values()){
+            
+            if(NodeSelectionStartegyEnum.LOWEST_SUM_INFEASIBILITY_FIRST.equals(nodeSelectionStrategy ))  continue; //skip LSI
+            
             if(NodeSelectionStartegyEnum.STRICT_BEST_FIRST.equals(nodeSelectionStrategy )){
                 activeSubtreeCollectionList= activeSubtreeCollectionListSBF;
                 homePartitionActiveSubTree= activeSubtreeSBF;
@@ -584,6 +594,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
                 homePartitionActiveSubTree= activeSubtreeBEF;
                 pruneList=pruneListBEF;
             }else {
+                
                 activeSubtreeCollectionList=activeSubtreeCollectionListLSI;
                 homePartitionActiveSubTree= activeSubtreeLSI;
                 pruneList=pruneListLSI;
@@ -728,7 +739,7 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
     } //end main
         
     private static boolean isHaltFilePresent (){
-        File file = new File("F:\\temporary files here\\haltfile.txt");
+        File file = new File("haltfile.txt");
          
         return file.exists();
     }
