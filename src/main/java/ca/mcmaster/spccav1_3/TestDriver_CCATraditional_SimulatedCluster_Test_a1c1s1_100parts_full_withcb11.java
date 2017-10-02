@@ -50,13 +50,13 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
     
     //  50(20), 100(40) , 200(90), 250(112) parts is ok
     
-    //wnq-n100-mw99-14  ru=5000, pa=100  size >= 50/4 yeilds 85 candidates with home=42   fast
-    //p100x588b        ru=15000, pa=100  size >= 50/4 yeilds 97 candidates with home=53   fast
+    //wnq-n100-mw99-14  ru=5000, pa=100  size >= 50/4 yeilds 85 candidates with home=42   fast  big-mem-hog-cannot_simulate
+    //p100x588b        ru=15000, pa=100  size >= 50/4 yeilds 97 candidates with home=53   fast  mem-hog-cannot_simulate
     //b2c1s1 ru=5000, pa=100  size >= 50/3 yeilds 94 candidates with home=48
     //seymour-disj-10 ru=5000, pa=100  size >= 50/4 yeilds 68 candidates with home=74
     //usAbbrv-8-25_70 ru=10000, pa=100  size >= 50/4 yeilds 96 candidates with home=77
     //neos-847302 ru=10000, pa=100  size >= 50/4 yeilds 94 candidates with home=50
-    //janos-us-DDM ru=8000, pa=100  size >= 50/4 yeilds 90 candidates with home=30  fast
+    //janos-us-DDM ru=8000, pa=100  size >= 50/4 yeilds 90 candidates with home=30  fast   leaves lots on home, try increasing packfact to 2.0 or min allowed size
     //
     //seymour ru=8000, pa=100  size >= 50/4 yeilds 99 candidates with home=40
     //rococoB10-011000 ru=5000, pa=100  size >= 50/4 yeilds 95 candidates with home=19
@@ -64,24 +64,26 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
     
     //for big partition counts
     //
-    //had1 running p100x with 1000 with memcheck and 2 min slices, had2 running p100x with   500 and memory and 2 min slices
-    //had 3 running wnq with 250  with memcheck and 2 min slices , had 4 running wnq with 250  with memcheck and 3minute slices
-    //had 5 runing p100x with 250 with memcheck with 2 min slices
+    //had1 running janos with 1000 with memcheck and 2 min slices, had2 running seymour with   500 and memory and 2 min slices
+    //had 3 running seymour with 250  with memcheck and 2 min slices , had 4 running seymour with 250  with memcheck and 3minute slices
+    //had 5 runing ? with 250 with memcheck with 2 min slices CB+LSI+CCA
     //
-    //p100x588b ru=60000, NUM_PARTITIONS = 1150 , 580, 250 , sct = 6m, ts=2m, 6m:3m 6m:1m
+    //p100x588b ru=60000, NUM_PARTITIONS = 1150 , 580, 250 , sct = 6m, ts=2m, 6m:3m 6m:1m size >=20/4, packfact=1.2
     //wnq-n100-mw99-14 ru=25000, NUM_PARTITIONS = 1150 , 550, 250 , sct = 6m, ts=2m, 6m:3m 6m:1m
-    
+    //janos-us-DDM ru=20000, NUM_PARTITIONS = 1150 , 580, 250 , sct = 6m, ts=2m, 6m:3m 6m:1m 
+    //seymour ru=10000, NUM_PARTITIONS =  200 , sct = 6m, ts=2m, 6m:3m 6m:1m
+    //seymour-disj_10 ru=20000, NUM_PARTITIONS =  1000 , sct = 6m, ts=2m, 6m:3m 6m:1m size >=20/10, packfact=12 
      
-    public static   String MIP_NAME_UNDER_TEST ="p100x588b";
-    public static   double MIP_WELLKNOWN_SOLUTION =  47878 ;
-    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 60000;  
+    public static   String MIP_NAME_UNDER_TEST ="seymour-disj-10";
+    public static   double MIP_WELLKNOWN_SOLUTION =     287 ;
+    public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 20000;  
     
     /* 
     public static   String MIP_NAME_UNDER_TEST ="timtab1";
     public static   double MIP_WELLKNOWN_SOLUTION =  764772;
     public static   int RAMP_UP_TO_THIS_MANY_LEAFS = 2000; */
  
-    private static  int NUM_PARTITIONS =580;
+    private static  int NUM_PARTITIONS =1000;
     private static double EXPECTED_LEAFS_PER_PARTITION = (RAMP_UP_TO_THIS_MANY_LEAFS +DOUBLE_ZERO)/NUM_PARTITIONS;
     
     //private static final int SOLUTION_CYCLE_Tu           fgggd hjhhIME_MINUTES = THREE;
@@ -258,7 +260,8 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
         long acceptedCandidateWithLowestNumOfLeafs = PLUS_INFINITY;
         for (CCANode ccaNode: candidateCCANodes){
 
-            if (ccaNode.getPackingFactor() < LCA_CANDIDATE_PACKING_FACTOR_LARGEST_ACCEPTABLE && ccaNode.pruneList.size() > EXPECTED_LEAFS_PER_PARTITION/FOUR ) {
+            if (ccaNode.getPackingFactor() < LCA_CANDIDATE_PACKING_FACTOR_LARGEST_ACCEPTABLE*TEN && 
+                    ccaNode.pruneList.size() >= EXPECTED_LEAFS_PER_PARTITION/TEN) {
                 logger.debug (""+ccaNode.nodeID + " has good packing factor " +ccaNode.getPackingFactor() + 
                         " and prune list size " + ccaNode.pruneList.size() + " depth from root "+ ccaNode.depthOfCCANodeBelowRoot) ; 
                 NUM_CCA_NODES_ACCEPTED_FOR_MIGRATION ++;
@@ -750,5 +753,6 @@ public class TestDriver_CCATraditional_SimulatedCluster_Test_a1c1s1_100parts_ful
     }
     
 }
+
 
 
